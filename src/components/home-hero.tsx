@@ -26,6 +26,7 @@ export function HomeHero({
   resumeUrl?: string | null;
 }) {
   const resumeHref = (resumeUrl ?? about?.resumeUrl)?.trim() || null;
+  const hasResume = Boolean(resumeHref);
   return (
     <motion.section
       id="home"
@@ -75,10 +76,10 @@ export function HomeHero({
               className="text-muted"
               linkClassName="font-medium text-foreground underline decoration-foreground/35 underline-offset-[3px] transition-colors hover:text-accent hover:decoration-accent"
             />
-            {resumeHref ? (
+            {hasResume ? (
               <div className="flex flex-wrap items-center gap-3 border-t border-border/60 pt-5">
                 <a
-                  href={resumeHref}
+                  href="/api/public/resume"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border-2 border-accent/60 bg-accent/10 px-5 py-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-foreground shadow-sm transition-colors hover:border-accent hover:bg-accent/20"
@@ -86,8 +87,7 @@ export function HomeHero({
                   View résumé
                 </a>
                 <a
-                  href={resumeHref}
-                  download
+                  href="/api/public/resume?download=1"
                   className="inline-flex items-center rounded-full border border-border px-4 py-2 text-[0.65rem] font-medium uppercase tracking-[0.16em] text-muted transition-colors hover:border-foreground/30 hover:text-foreground"
                 >
                   Download PDF

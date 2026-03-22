@@ -44,7 +44,7 @@ export function VerticalNav({ resumeUrl }: { resumeUrl?: string | null }) {
       {resumeUrl ? (
         <motion.a
           key="resume"
-          href={resumeUrl}
+          href="/api/public/resume"
           target="_blank"
           rel="noopener noreferrer"
           title="View résumé (PDF)"
