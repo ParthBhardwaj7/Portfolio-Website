@@ -12,6 +12,7 @@ type About = {
   profileImage: string | null;
   heroTagline: string | null;
   contactCaption: string | null;
+  resumeUrl: string | null;
 };
 type PortfolioItem = {
   id: string;
@@ -221,6 +222,7 @@ function AboutForm({
   const [profileImage, setProfileImage] = useState(initial.profileImage ?? "");
   const [heroTagline, setHeroTagline] = useState(initial.heroTagline ?? "");
   const [contactCaption, setContactCaption] = useState(initial.contactCaption ?? "");
+  const [resumeUrl, setResumeUrl] = useState(initial.resumeUrl ?? "");
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
 
@@ -229,6 +231,7 @@ function AboutForm({
     setProfileImage(initial.profileImage ?? "");
     setHeroTagline(initial.heroTagline ?? "");
     setContactCaption(initial.contactCaption ?? "");
+    setResumeUrl(initial.resumeUrl ?? "");
   }, [initial]);
 
   async function save(e: React.FormEvent) {
@@ -244,6 +247,7 @@ function AboutForm({
           profileImage: profileImage || null,
           heroTagline: heroTagline.trim() || null,
           contactCaption: contactCaption.trim() || null,
+          resumeUrl: resumeUrl.trim() || null,
         }),
       });
       onSaved(updated);
@@ -312,6 +316,38 @@ function AboutForm({
           }
         }}
       />
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+        <p className="text-sm text-white/70">Résumé (PDF)</p>
+        <p className="mt-1 text-xs text-white/45">
+          Paste a public PDF URL, or upload — PDF only · max 10MB. The site shows View résumé + Download, and a Résumé link in the nav.
+        </p>
+        <label className="mt-3 block text-sm text-white/70">
+          PDF URL
+          <input
+            className="mt-2 w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-sm text-white"
+            value={resumeUrl}
+            onChange={(e) => setResumeUrl(e.target.value)}
+            placeholder="https://… or /uploads/…"
+          />
+        </label>
+        <input
+          type="file"
+          accept="application/pdf"
+          className="mt-3 text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
+          aria-label="Upload résumé PDF"
+          onChange={async (e) => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            onError(null);
+            try {
+              const url = await uploadFile(f);
+              setResumeUrl(url);
+            } catch (err) {
+              onError(err instanceof Error ? err.message : "Upload failed");
+            }
+          }}
+        />
+      </div>
       <button
         type="submit"
         disabled={saving}

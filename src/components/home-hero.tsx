@@ -10,17 +10,21 @@ import { siteConfig } from "@/lib/site-config";
 type About = {
   content: string | null;
   profileImage: string | null;
+  resumeUrl?: string | null;
 } | null;
 
 export function HomeHero({
   about,
   aboutText,
   heroTagline,
+  resumeUrl,
 }: {
   about: About;
   aboutText: string;
   heroTagline: string;
+  resumeUrl?: string | null;
 }) {
+  const resumeHref = (resumeUrl ?? about?.resumeUrl)?.trim() || null;
   return (
     <motion.section
       id="home"
@@ -63,13 +67,32 @@ export function HomeHero({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.16 }}
-            className="max-w-xl text-sm leading-relaxed text-muted sm:text-base"
+            className="max-w-xl space-y-5 text-sm leading-relaxed text-muted sm:text-base"
           >
             <TextWithEmailLink
               text={heroTagline}
               className="text-muted"
               linkClassName="font-medium text-foreground underline decoration-foreground/35 underline-offset-[3px] transition-colors hover:text-accent hover:decoration-accent"
             />
+            {resumeHref ? (
+              <div className="flex flex-wrap items-center gap-3 border-t border-border/60 pt-5">
+                <a
+                  href={resumeHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-accent/60 bg-accent/10 px-5 py-2.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-foreground shadow-sm transition-colors hover:border-accent hover:bg-accent/20"
+                >
+                  View résumé
+                </a>
+                <a
+                  href={resumeHref}
+                  download
+                  className="inline-flex items-center rounded-full border border-border px-4 py-2 text-[0.65rem] font-medium uppercase tracking-[0.16em] text-muted transition-colors hover:border-foreground/30 hover:text-foreground"
+                >
+                  Download PDF
+                </a>
+              </div>
+            ) : null}
           </motion.div>
         </div>
 

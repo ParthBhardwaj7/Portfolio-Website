@@ -10,7 +10,7 @@ const links: { href: string; label: string; id: SectionId }[] = [
   { href: "#contact", label: "Contact", id: "contact" },
 ];
 
-export function VerticalNav() {
+export function VerticalNav({ resumeUrl }: { resumeUrl?: string | null }) {
   const active = useSectionActive();
 
   return (
@@ -41,6 +41,22 @@ export function VerticalNav() {
           </motion.a>
         );
       })}
+      {resumeUrl ? (
+        <motion.a
+          key="resume"
+          href={resumeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="View résumé (PDF)"
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.05 * links.length }}
+          className="group relative inline-flex w-fit flex-col"
+        >
+          <span className="text-muted transition-colors hover:text-foreground">My résumé</span>
+          <span className="mt-1 h-px w-full origin-left scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
+        </motion.a>
+      ) : null}
     </nav>
   );
 }

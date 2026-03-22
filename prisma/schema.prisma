@@ -35,6 +35,8 @@ model About {
   heroTagline    String? @db.Text
   /// Text on the contact section photo card overlay.
   contactCaption String? @db.Text
+  /// Public PDF URL for “Download résumé” (https://…, Cloudinary raw, or /uploads/…).
+  resumeUrl      String? @db.Text
 }
 
 /// Grouped technical skills (e.g. Programming Languages, Backend Engineering).

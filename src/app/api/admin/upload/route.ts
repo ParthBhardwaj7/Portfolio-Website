@@ -15,7 +15,12 @@ export async function POST(request: Request) {
     return Response.json({ url });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Upload failed";
-    if (msg.includes("Invalid") || msg.includes("large") || msg.includes("No file")) {
+    if (
+      msg.includes("Invalid") ||
+      msg.includes("large") ||
+      msg.includes("No file") ||
+      msg.includes("Unsupported")
+    ) {
       return jsonError(msg, 400, "UPLOAD");
     }
     if (msg.includes("Cloudinary") || msg.includes("not configured")) {

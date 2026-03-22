@@ -12,7 +12,7 @@ import {
   getPublicSkillCategories,
 } from "@/lib/public-data";
 import { DEFAULT_CONTACT_CAPTION, DEFAULT_HERO_TAGLINE } from "@/lib/copy-defaults";
-import { siteConfig } from "@/lib/site-config";
+import { resolvePublicResumeUrl, siteConfig } from "@/lib/site-config";
 
 export default async function HomePage() {
   const [about, skillCategories, portfolioRaw] = await Promise.all([
@@ -34,7 +34,12 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col">
-      <HomeHero about={about} aboutText={aboutText} heroTagline={heroTagline} />
+      <HomeHero
+        about={about}
+        aboutText={aboutText}
+        heroTagline={heroTagline}
+        resumeUrl={resolvePublicResumeUrl(about?.resumeUrl)}
+      />
 
       <ScrollSection id="works" className="space-y-8 pt-20 sm:pt-24 lg:pt-28">
         <SectionHeading

@@ -31,12 +31,14 @@ export async function PUT(request: Request) {
     const profileImage = emptyToNull(data.profileImage ?? undefined);
     const heroTagline = emptyToNull(data.heroTagline ?? undefined);
     const contactCaption = emptyToNull(data.contactCaption ?? undefined);
+    const resumeUrl = emptyToNull(data.resumeUrl ?? undefined);
 
     const payload = {
       content: data.content,
       profileImage,
       heroTagline,
       contactCaption,
+      resumeUrl,
     };
 
     if (!about) {

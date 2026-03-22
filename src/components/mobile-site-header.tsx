@@ -22,7 +22,13 @@ type Social = {
   twitter: string | null;
 };
 
-export function MobileSiteHeader({ social }: { social: Social }) {
+export function MobileSiteHeader({
+  social,
+  resumeUrl,
+}: {
+  social: Social;
+  resumeUrl?: string | null;
+}) {
   const active = useSectionActive();
   const email = siteConfig.contactEmail;
 
@@ -62,6 +68,22 @@ export function MobileSiteHeader({ social }: { social: Social }) {
               </motion.a>
             );
           })}
+          {resumeUrl ? (
+            <motion.a
+              key="resume"
+              href={resumeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="View résumé (PDF)"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.03 * links.length }}
+              className="group inline-flex flex-col"
+            >
+              <span className="text-muted">My résumé</span>
+              <span className="mt-0.5 h-px w-full origin-left scale-x-0 bg-foreground transition-transform duration-300 group-hover:scale-x-100" />
+            </motion.a>
+          ) : null}
         </nav>
         {row.length > 0 ? (
           <div className="flex shrink-0 flex-row items-center gap-4 pt-0.5 text-foreground">
