@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { AboutTypewriter } from "@/components/about-typewriter";
 import { TextWithEmailLink } from "@/components/text-with-email-link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { isUnoptimizedImageSrc } from "@/lib/remote-image";
 import { siteConfig } from "@/lib/site-config";
 
 type About = {
@@ -117,7 +118,7 @@ export function HomeHero({
                   fill
                   className="object-cover"
                   sizes="128px"
-                  unoptimized={about.profileImage.startsWith("/uploads/")}
+                  unoptimized={isUnoptimizedImageSrc(about.profileImage)}
                 />
               </div>
             ) : null}

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
+import { isUnoptimizedImageSrc } from "@/lib/remote-image";
 import { useState } from "react";
 
 export type PortfolioItem = {
@@ -64,7 +65,7 @@ export function PortfolioCard({ item, index }: { item: PortfolioItem; index: num
               className="object-cover transition duration-500 group-hover:scale-[1.02]"
               sizes="(max-width: 768px) 100vw, 50vw"
               loading="lazy"
-              unoptimized={item.image.startsWith("/uploads/")}
+              unoptimized={isUnoptimizedImageSrc(item.image)}
               onError={() => setImageFailed(true)}
             />
           ) : null}

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { ContactForm } from "@/components/contact-form";
+import { isUnoptimizedImageSrc } from "@/lib/remote-image";
 import { TextWithEmailLink } from "@/components/text-with-email-link";
 
 type Props = {
@@ -35,7 +36,7 @@ export function ContactSection({ profileImage, displayName, contactCaption }: Pr
             className="object-cover object-top"
             sizes="(max-width: 1024px) 100vw, 45vw"
             priority={false}
-            unoptimized={profileImage.startsWith("/uploads/")}
+            unoptimized={isUnoptimizedImageSrc(profileImage)}
           />
         ) : (
           <div className="flex h-full min-h-[380px] flex-col items-center justify-center gap-3 bg-gradient-to-br from-neutral-200 via-neutral-300 to-neutral-400 p-8 dark:from-neutral-800 dark:via-neutral-900 dark:to-neutral-950">
