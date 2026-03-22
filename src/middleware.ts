@@ -30,5 +30,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  /* Include `/admin` root explicitly (some Next versions treat `:path*` differently). */
+  matcher: ["/admin", "/admin/:path*"],
 };

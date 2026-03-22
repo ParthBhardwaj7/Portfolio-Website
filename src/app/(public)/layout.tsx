@@ -5,11 +5,20 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { VerticalNav } from "@/components/vertical-nav";
 import { getPublicSocial } from "@/lib/public-data";
 
+/** Cached static shell; admin mutations call `revalidatePublicPages()` for instant updates. */
+export const revalidate = 60;
+
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const social = await getPublicSocial();
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen overflow-x-hidden">
+      <a
+        href="#main"
+        className="sr-only left-4 top-4 z-[10001] rounded-md border border-border bg-background px-4 py-2 text-sm text-foreground shadow-sm outline-none ring-offset-background transition focus:not-sr-only focus:absolute focus:ring-2 focus:ring-accent"
+      >
+        Skip to main content
+      </a>
       <SiteRefreshOnFocus />
       <div className="pointer-events-none fixed right-5 top-5 z-[10000] hidden lg:block sm:right-8 sm:top-8 md:right-10 md:top-10">
         <div className="pointer-events-auto">
@@ -18,11 +27,13 @@ export default async function PublicLayout({ children }: { children: React.React
       </div>
       <MobileSiteHeader social={social} />
       <div className="mx-auto flex max-w-[1400px] flex-col gap-10 px-4 pb-20 pt-6 sm:gap-12 sm:px-6 sm:pt-8 md:px-8 lg:flex-row lg:gap-12 lg:px-10 lg:pt-14 xl:gap-16">
-        <aside className="hidden shrink-0 flex-col lg:flex lg:w-44 xl:w-52">
+        <aside className="hidden shrink-0 flex-col lg:flex lg:w-44 xl:w-52" aria-label="Site">
           <VerticalNav />
           <SidebarSocial social={social} />
         </aside>
-        <div className="min-w-0 flex-1">{children}</div>
+        <main id="main" className="min-w-0 flex-1 outline-none" tabIndex={-1}>
+          {children}
+        </main>
       </div>
     </div>
   );

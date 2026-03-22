@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Syne } from "next/font/google";
 import "./globals.css";
-import { CustomCursor } from "@/components/custom-cursor";
 import { Providers } from "@/components/providers";
 
 const dmSans = DM_Sans({
@@ -38,12 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${syne.variable} font-sans antialiased`}>
-        <Providers>
-          <>
-            {children}
-            <CustomCursor />
-          </>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

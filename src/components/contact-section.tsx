@@ -56,7 +56,7 @@ export function ContactSection({ profileImage, displayName, contactCaption }: Pr
                 linkClassName="font-semibold text-white underline decoration-white/80 underline-offset-[3px] transition-opacity hover:opacity-90"
               />
             </p>
-            <p className="mt-4 font-display text-lg text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]">
+            <p className="mt-4 font-display text-lg uppercase tracking-[0.12em] text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]">
               {displayName}
             </p>
           </div>

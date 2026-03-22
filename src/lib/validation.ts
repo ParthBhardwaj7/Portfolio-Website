@@ -33,6 +33,8 @@ export const portfolioCreateSchema = z.object({
   description: z.string().min(1, "Description is required").max(10000),
   image: optionalUrlOrPath,
   link: optionalUrlOrPath,
+  galleryCaption: z.string().max(500).optional().nullable(),
+  videoUrl: optionalUrlOrPath,
 });
 
 export const portfolioItemUpdateSchema = portfolioCreateSchema.extend({

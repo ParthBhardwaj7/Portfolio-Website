@@ -21,8 +21,15 @@ export async function PUT(request: Request, ctx: { params: { id: string } }) {
         ...(data.description !== undefined && { description: data.description }),
         ...(data.image !== undefined && { image: emptyToNull(data.image ?? undefined) }),
         ...(data.link !== undefined && { link: emptyToNull(data.link ?? undefined) }),
+        ...(data.galleryCaption !== undefined && {
+          galleryCaption: emptyToNull(data.galleryCaption ?? undefined),
+        }),
+        ...(data.videoUrl !== undefined && {
+          videoUrl: emptyToNull(data.videoUrl ?? undefined),
+        }),
       },
     });
+    revalidatePublicPages();
     return Response.json(item);
   } catch (e) {
     return handleRouteError(e);

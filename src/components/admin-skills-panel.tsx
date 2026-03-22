@@ -9,8 +9,14 @@ type Category = { id: string; title: string; sortOrder: number; items: Item[] };
 export function AdminSkillsPanel({ onError }: { onError: (s: string | null) => void }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savedFlash, setSavedFlash] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [draftItem, setDraftItem] = useState<Record<string, string>>({});
+
+  function flashSaved() {
+    setSavedFlash(true);
+    window.setTimeout(() => setSavedFlash(false), 2000);
+  }
 
   const load = useCallback(async () => {
     const list = await adminFetchJson<Category[]>("/api/admin/skill-categories");
@@ -38,6 +44,7 @@ export function AdminSkillsPanel({ onError }: { onError: (s: string | null) => v
       });
       setNewTitle("");
       await load();
+      flashSaved();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed");
     }
@@ -52,6 +59,7 @@ export function AdminSkillsPanel({ onError }: { onError: (s: string | null) => v
         body: JSON.stringify({ title: title.trim() }),
       });
       await load();
+      flashSaved();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed");
     }
@@ -63,6 +71,7 @@ export function AdminSkillsPanel({ onError }: { onError: (s: string | null) => v
     try {
       await adminFetchJson(`/api/admin/skill-categories/${id}`, { method: "DELETE" });
       await load();
+      flashSaved();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed");
     }
@@ -80,6 +89,7 @@ export function AdminSkillsPanel({ onError }: { onError: (s: string | null) => v
       });
       setDraftItem((d) => ({ ...d, [categoryId]: "" }));
       await load();
+      flashSaved();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed");
     }
@@ -94,6 +104,7 @@ export function AdminSkillsPanel({ onError }: { onError: (s: string | null) => v
         body: JSON.stringify({ label: label.trim() }),
       });
       await load();
+      flashSaved();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed");
     }
@@ -105,6 +116,7 @@ export function AdminSkillsPanel({ onError }: { onError: (s: string | null) => v
     try {
       await adminFetchJson(`/api/admin/skill-items/${id}`, { method: "DELETE" });
       await load();
+      flashSaved();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Failed");
     }
@@ -116,6 +128,11 @@ export function AdminSkillsPanel({ onError }: { onError: (s: string | null) => v
 
   return (
     <div className="space-y-8 text-white">
+      {savedFlash ? (
+        <p className="text-sm text-emerald-400/90" role="status">
+          Saved
+        </p>
+      ) : null}
       <p className="text-sm text-white/60">
         Organize technical expertise into categories (e.g. Programming Languages). Each line becomes one pill on
         the site. Labels can be short names or longer phrases.

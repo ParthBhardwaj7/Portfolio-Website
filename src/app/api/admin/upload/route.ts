@@ -1,5 +1,5 @@
 import { requireAdminSession } from "@/lib/auth";
-import { saveUploadedImage } from "@/lib/upload";
+import { saveUploadedFile } from "@/lib/upload";
 import { handleRouteError, jsonError } from "@/lib/errors";
 
 export async function POST(request: Request) {
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     if (!file || !(file instanceof File)) {
       return jsonError("Missing file field \"file\"", 400, "VALIDATION");
     }
-    const { url } = await saveUploadedImage(file);
+    const { url } = await saveUploadedFile(file);
     return Response.json({ url });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Upload failed";

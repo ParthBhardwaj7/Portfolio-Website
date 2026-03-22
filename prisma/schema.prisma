@@ -15,12 +15,16 @@ model Admin {
 }
 
 model Portfolio {
-  id          String   @id @default(uuid())
-  title       String
-  description String   @db.Text
-  image       String?
-  link        String?
-  createdAt   DateTime @default(now())
+  id              String   @id @default(uuid())
+  title           String
+  description     String   @db.Text
+  image           String?
+  link            String?
+  /// Short line on the Gallery (visual snapshots) image; optional.
+  galleryCaption  String?  @db.Text
+  /// Looping muted video on Works + Gallery (MP4/WebM URL or /uploads/…); optional.
+  videoUrl        String?  @db.Text
+  createdAt       DateTime @default(now())
 }
 
 model About {

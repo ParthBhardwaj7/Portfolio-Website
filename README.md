@@ -32,6 +32,7 @@ Full-stack personal portfolio with a **JWT-protected admin panel**, **PostgreSQL
 
    - `DATABASE_URL` — PostgreSQL connection string  
    - `JWT_SECRET` — at least 16 characters (use a strong random value in production)  
+   - `ADMIN_USERNAME` / `ADMIN_PASSWORD` — admin panel login; **in production** (`NODE_ENV=production`) the password is **required** and must be **8+ characters** (see `src/lib/admin-credentials.ts`).  
    - `NEXT_PUBLIC_APP_URL` — e.g. `http://localhost:3000` for local dev  
    - For **Vercel / serverless:** set `UPLOAD_PROVIDER=cloudinary` and fill Cloudinary keys (local disk is not persistent on Vercel).
 
@@ -56,12 +57,9 @@ Full-stack personal portfolio with a **JWT-protected admin panel**, **PostgreSQL
    npm run admin:create
    ```
 
-   Default admin (unless overridden by `SEED_ADMIN_USERNAME` / `SEED_ADMIN_PASSWORD`, or `ADMIN_USERNAME` / `ADMIN_PASSWORD` for `admin:create`):
-
-   - Username: `admin`  
-   - Password: `changeme123`  
-
-   Change the password after first login in production.
+   Credentials come from `.env`: **`ADMIN_USERNAME`** and **`ADMIN_PASSWORD`** (optional fallbacks: `SEED_ADMIN_*`).  
+   **Development:** if you omit `ADMIN_PASSWORD`, a default dev password is used (with a warning).  
+   **Production:** set a strong `ADMIN_PASSWORD` (8+ characters); default passwords are rejected when `NODE_ENV=production`.
 
 5. **Run development server**
 
@@ -136,7 +134,7 @@ The public homepage reads data **directly from Prisma** in Server Components for
 ## Security notes
 
 - Use a long, random `JWT_SECRET` in production.  
-- Replace seeded admin credentials immediately in production.  
+- Set `ADMIN_PASSWORD` (and `JWT_SECRET`) in hosting environment variables; never commit real secrets.  
 - Prefer **HTTPS** and `Secure` cookies (handled when `NODE_ENV=production`).  
 - Consider rate limiting for `/api/auth/login` and `/api/contact` (e.g. Redis / Upstash) for public-facing deployments.
 

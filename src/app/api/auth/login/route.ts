@@ -3,9 +3,18 @@ import { loginSchema } from "@/lib/validation";
 import { loginAdmin } from "@/lib/auth";
 import { ADMIN_COOKIE } from "@/lib/constants";
 import { handleRouteError, jsonError } from "@/lib/errors";
+import { isJwtConfigured } from "@/lib/jwt";
+import { sessionCookieSecure } from "@/lib/session-cookie";
 
 export async function POST(request: Request) {
   try {
+    if (!isJwtConfigured()) {
+      return jsonError(
+        "Set JWT_SECRET (min 16 characters) in your environment and restart the server.",
+        503,
+        "CONFIG"
+      );
+    }
     const body = await request.json();
     const parsed = loginSchema.parse(body);
     const result = await loginAdmin(parsed.username, parsed.password);
@@ -15,7 +24,7 @@ export async function POST(request: Request) {
     const res = NextResponse.json({ ok: true });
     res.cookies.set(ADMIN_COOKIE, result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: sessionCookieSecure(),
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,

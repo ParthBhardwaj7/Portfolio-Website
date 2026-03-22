@@ -1,7 +1,7 @@
 import { ContactSection } from "@/components/contact-section";
 import { GalleryMasonry } from "@/components/gallery-masonry";
 import { HomeHero } from "@/components/home-hero";
-import { PortfolioCard } from "@/components/portfolio-card";
+import { WorksScrollShowcase } from "@/components/works-scroll-showcase";
 import { ScrollSection } from "@/components/scroll-section";
 import { SectionHeading } from "@/components/section-heading";
 import { SiteFooter } from "@/components/site-footer";
@@ -13,8 +13,6 @@ import {
 } from "@/lib/public-data";
 import { DEFAULT_CONTACT_CAPTION, DEFAULT_HERO_TAGLINE } from "@/lib/copy-defaults";
 import { siteConfig } from "@/lib/site-config";
-
-export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [about, skillCategories, portfolioRaw] = await Promise.all([
@@ -29,16 +27,16 @@ export default async function HomePage() {
     about?.content ??
     "Backend engineer focused on APIs, data, and reliability. Connect your database to replace this text in the admin panel.";
 
-  const galleryItems = portfolio.filter((p) => p?.image);
+  const galleryItems = portfolio.filter((p) => p?.image || p?.videoUrl);
 
   const heroTagline = (about?.heroTagline?.trim() || DEFAULT_HERO_TAGLINE) as string;
   const contactCaption = (about?.contactCaption?.trim() || DEFAULT_CONTACT_CAPTION) as string;
 
   return (
-    <div className="space-y-20 sm:space-y-24 lg:space-y-32">
+    <div className="flex flex-col">
       <HomeHero about={about} aboutText={aboutText} heroTagline={heroTagline} />
 
-      <ScrollSection id="works" className="scroll-mt-32 space-y-10 lg:scroll-mt-28">
+      <ScrollSection id="works" className="space-y-8 pt-20 sm:pt-24 lg:pt-28">
         <SectionHeading
           title="Works"
           subtitle="Selected projects and experiments."
@@ -48,22 +46,11 @@ export default async function HomePage() {
             Projects coming soon — add items from the admin panel.
           </div>
         ) : (
-          <div className="grid gap-8 md:grid-cols-2">
-            {portfolio.map((item, index) => (
-              <PortfolioCard
-                key={item.id}
-                item={{
-                  ...item,
-                  createdAt: item.createdAt,
-                }}
-                index={index}
-              />
-            ))}
-          </div>
+          <WorksScrollShowcase items={portfolio} />
         )}
       </ScrollSection>
 
-      <ScrollSection id="gallery" className="scroll-mt-32 space-y-10 lg:scroll-mt-28">
+      <ScrollSection id="gallery" className="space-y-10 pt-20 sm:pt-24 lg:pt-28">
         <SectionHeading
           title="Gallery"
           subtitle="Visual snapshots from the portfolio."
@@ -71,14 +58,14 @@ export default async function HomePage() {
         <GalleryMasonry items={galleryItems} />
       </ScrollSection>
 
-      <ScrollSection id="skills" className="scroll-mt-32 lg:scroll-mt-28">
+      <ScrollSection id="skills" className="pt-20 sm:pt-24 lg:pt-28">
         <TechnicalSkillsSection
           categories={skillCategories}
           heading={siteConfig.skillsSectionHeading}
         />
       </ScrollSection>
 
-      <ScrollSection id="contact" className="scroll-mt-32 space-y-10 pb-4 lg:scroll-mt-28">
+      <ScrollSection id="contact" className="space-y-10 pb-4 pt-20 sm:pt-24 lg:pt-28">
         <ContactSection
           profileImage={about?.profileImage ?? null}
           displayName={String(siteConfig.heroName ?? "Portfolio")}

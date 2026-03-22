@@ -1,6 +1,11 @@
 import { SignJWT, jwtVerify } from "jose";
 import { JWT_EXPIRY } from "./constants";
 
+export function isJwtConfigured(): boolean {
+  const s = process.env.JWT_SECRET;
+  return Boolean(s && s.length >= 16);
+}
+
 export function getJwtSecret() {
   const s = process.env.JWT_SECRET;
   if (!s || s.length < 16) {

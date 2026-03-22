@@ -1,10 +1,16 @@
+import { config } from "dotenv";
+import { resolve } from "path";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import {
+  describePasswordForLogs,
+  resolveAdminCredentials,
+} from "../src/lib/admin-credentials";
+
+config({ path: resolve(process.cwd(), ".env") });
+config({ path: resolve(process.cwd(), ".env.local"), override: true });
 
 const prisma = new PrismaClient();
-
-const ADMIN_USER = process.env.SEED_ADMIN_USERNAME ?? "admin";
-const ADMIN_PASS = process.env.SEED_ADMIN_PASSWORD ?? "changeme123";
 
 /** Set SEED_DUMMY=0 to skip demo portfolio / contacts on empty DB */
 const SEED_DUMMY = process.env.SEED_DUMMY !== "0";
@@ -54,6 +60,8 @@ const DUMMY_PORTFOLIO: {
   description: string;
   image: string;
   link: string | null;
+  galleryCaption?: string | null;
+  videoUrl?: string | null;
 }[] = [
   {
     title: "API Gateway & Auth Service",
@@ -61,6 +69,7 @@ const DUMMY_PORTFOLIO: {
       "Dummy project: JWT-based auth, rate limiting, and OpenAPI docs. Replace this text in admin — this seed data is only for local UI testing.",
     image: "https://picsum.photos/seed/gateway/1200/750",
     link: "https://github.com",
+    galleryCaption: "JWT · rate limits · OpenAPI",
   },
   {
     title: "Realtime Events Pipeline",
@@ -68,6 +77,7 @@ const DUMMY_PORTFOLIO: {
       "Dummy: WebSocket fan-out, Redis streams, and idempotent workers. Use admin to add your real projects later.",
     image: "https://picsum.photos/seed/pipeline/1200/750",
     link: "https://github.com",
+    galleryCaption: "WebSockets · Redis streams",
   },
   {
     title: "Data Sync & ETL",
@@ -75,6 +85,7 @@ const DUMMY_PORTFOLIO: {
       "Dummy: Scheduled jobs, Prisma + Postgres, dead-letter queue for failures. Portfolio card layout + gallery test.",
     image: "https://picsum.photos/seed/etl/1200/750",
     link: null,
+    galleryCaption: null,
   },
   {
     title: "Admin Dashboard",
@@ -82,6 +93,7 @@ const DUMMY_PORTFOLIO: {
       "Dummy: CRUD UI, role checks, and audit logs — demonstrates two-column works grid on desktop.",
     image: "https://picsum.photos/seed/admin/1200/750",
     link: "https://example.com",
+    galleryCaption: "CRUD · audit trail",
   },
 ];
 
@@ -133,7 +145,16 @@ async function seedDummyPortfolio() {
     return;
   }
   for (const row of DUMMY_PORTFOLIO) {
-    await prisma.portfolio.create({ data: row });
+    await prisma.portfolio.create({
+      data: {
+        title: row.title,
+        description: row.description,
+        image: row.image,
+        link: row.link,
+        galleryCaption: row.galleryCaption ?? null,
+        videoUrl: row.videoUrl ?? null,
+      },
+    });
   }
   console.log(`Seeded ${DUMMY_PORTFOLIO.length} dummy portfolio items (picsum images).`);
 }
@@ -172,6 +193,7 @@ async function seedDummySocialLinks() {
 }
 
 async function main() {
+  const { username: ADMIN_USER, password: ADMIN_PASS } = resolveAdminCredentials();
   const passwordHash = await bcrypt.hash(ADMIN_PASS, 12);
 
   await prisma.admin.upsert({
@@ -211,10 +233,14 @@ async function main() {
 
   console.log("Seed complete.");
   console.log(`Admin username: ${ADMIN_USER}`);
-  console.log(`Admin password: ${ADMIN_PASS}`);
-  console.log("Change the password after first login in production.");
+  console.log(`Admin password: ${describePasswordForLogs(ADMIN_PASS)}`);
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Change credentials via .env (ADMIN_*) and re-run seed or admin:create for production.");
+  }
   if (SEED_DUMMY) {
-    console.log("Dummy data: portfolio + contacts only when those tables were empty. Set SEED_DUMMY=0 to skip next time.");
+    console.log(
+      "Dummy data: portfolio + contacts only when those tables were empty. Set SEED_DUMMY=0 to skip next time."
+    );
   }
 }
 

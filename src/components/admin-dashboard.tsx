@@ -19,6 +19,8 @@ type PortfolioItem = {
   description: string;
   image: string | null;
   link: string | null;
+  galleryCaption: string | null;
+  videoUrl: string | null;
   createdAt: string;
 };
 type Social = {
@@ -39,6 +41,10 @@ type Contact = {
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { ...init, credentials: "include" });
+  if (res.status === 401) {
+    if (typeof window !== "undefined") window.location.assign("/admin/login");
+    throw new Error("Session expired. Redirecting to login…");
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = typeof data.error === "string" ? data.error : res.statusText;
@@ -102,7 +108,8 @@ export function AdminDashboard() {
     router.refresh();
   }
 
-  async function uploadImage(file: File) {
+  /** Images + videos (API picks handler from MIME type). */
+  async function uploadFile(file: File) {
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch("/api/admin/upload", {
@@ -110,6 +117,10 @@ export function AdminDashboard() {
       body: fd,
       credentials: "include",
     });
+    if (res.status === 401) {
+      if (typeof window !== "undefined") window.location.assign("/admin/login");
+      throw new Error("Session expired. Redirecting to login…");
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Upload failed");
     return data.url as string;
@@ -164,13 +175,13 @@ export function AdminDashboard() {
           {error}
         </p>
       ) : null}
-      {loading ? <p className="text-sm text-white/50">Loading…</p> : null}
+      {loading && tab !== "skills" ? <p className="text-sm text-white/50">Loading…</p> : null}
 
       {tab === "about" && about && (
         <AboutForm
           initial={about}
           onSaved={setAbout}
-          uploadImage={uploadImage}
+          uploadFile={uploadFile}
           onError={setError}
         />
       )}
@@ -179,7 +190,7 @@ export function AdminDashboard() {
         <PortfolioSection
           items={portfolio}
           reload={loadPortfolio}
-          uploadImage={uploadImage}
+          uploadFile={uploadFile}
           onError={setError}
         />
       )}
@@ -198,12 +209,12 @@ export function AdminDashboard() {
 function AboutForm({
   initial,
   onSaved,
-  uploadImage,
+  uploadFile,
   onError,
 }: {
   initial: About;
   onSaved: (a: About) => void;
-  uploadImage: (f: File) => Promise<string>;
+  uploadFile: (f: File) => Promise<string>;
   onError: (s: string | null) => void;
 }) {
   const [content, setContent] = useState(initial.content);
@@ -211,6 +222,7 @@ function AboutForm({
   const [heroTagline, setHeroTagline] = useState(initial.heroTagline ?? "");
   const [contactCaption, setContactCaption] = useState(initial.contactCaption ?? "");
   const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
 
   useEffect(() => {
     setContent(initial.content);
@@ -235,6 +247,8 @@ function AboutForm({
         }),
       });
       onSaved(updated);
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 2000);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -275,7 +289,7 @@ function AboutForm({
         />
       </label>
       <label className="block text-sm text-white/70">
-        Profile image URL (upload file below)
+        Profile image — paste URL or upload (JPEG, PNG, WebP, GIF · max 4MB)
         <input
           className="mt-2 w-full rounded-lg border border-white/20 bg-black/40 px-4 py-2 text-sm text-white"
           value={profileImage}
@@ -285,12 +299,13 @@ function AboutForm({
       <input
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
+        aria-label="Upload profile image file"
         onChange={async (e) => {
           const f = e.target.files?.[0];
           if (!f) return;
           onError(null);
           try {
-            const url = await uploadImage(f);
+            const url = await uploadFile(f);
             setProfileImage(url);
           } catch (err) {
             onError(err instanceof Error ? err.message : "Upload failed");
@@ -304,6 +319,11 @@ function AboutForm({
       >
         {saving ? "Saving…" : "Save"}
       </button>
+      {savedFlash ? (
+        <p className="text-sm text-emerald-400/90" role="status">
+          Saved
+        </p>
+      ) : null}
     </form>
   );
 }
@@ -311,26 +331,31 @@ function AboutForm({
 function PortfolioSection({
   items,
   reload,
-  uploadImage,
+  uploadFile,
   onError,
 }: {
   items: PortfolioItem[];
   reload: () => Promise<void>;
-  uploadImage: (f: File) => Promise<string>;
+  uploadFile: (f: File) => Promise<string>;
   onError: (s: string | null) => void;
 }) {
   const [editing, setEditing] = useState<PortfolioItem | "new" | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [link, setLink] = useState("");
+  const [galleryCaption, setGalleryCaption] = useState("");
+  const [savedFlash, setSavedFlash] = useState(false);
 
   function openNew() {
     setEditing("new");
     setTitle("");
     setDescription("");
     setImage("");
+    setVideoUrl("");
     setLink("");
+    setGalleryCaption("");
   }
 
   function openEdit(item: PortfolioItem) {
@@ -338,7 +363,9 @@ function PortfolioSection({
     setTitle(item.title);
     setDescription(item.description);
     setImage(item.image ?? "");
+    setVideoUrl(item.videoUrl ?? "");
     setLink(item.link ?? "");
+    setGalleryCaption(item.galleryCaption ?? "");
   }
 
   async function save(e: React.FormEvent) {
@@ -352,8 +379,10 @@ function PortfolioSection({
           body: JSON.stringify({
             title,
             description,
-            image: image || null,
-            link: link || null,
+            image: image.trim() || null,
+            link: link.trim() || null,
+            galleryCaption: galleryCaption.trim() || null,
+            videoUrl: videoUrl.trim() || null,
           }),
         });
       } else if (editing) {
@@ -364,13 +393,17 @@ function PortfolioSection({
             id: editing.id,
             title,
             description,
-            image: image || null,
-            link: link || null,
+            image: image.trim() || null,
+            link: link.trim() || null,
+            galleryCaption: galleryCaption.trim() || null,
+            videoUrl: videoUrl.trim() || null,
           }),
         });
       }
       setEditing(null);
       await reload();
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 2000);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Save failed");
     }
@@ -389,6 +422,11 @@ function PortfolioSection({
 
   return (
     <div className="space-y-8 text-white">
+      {savedFlash ? (
+        <p className="text-sm text-emerald-400/90" role="status">
+          Saved
+        </p>
+      ) : null}
       <button
         type="button"
         onClick={openNew}
@@ -427,7 +465,7 @@ function PortfolioSection({
       </ul>
 
       {editing && (
-        <form onSubmit={save} className="space-y-4 rounded-xl border border-white/20 p-6">
+        <form onSubmit={save} className="space-y-5 rounded-xl border border-white/20 p-6">
           <h3 className="font-medium">{editing === "new" ? "New project" : "Edit project"}</h3>
           <input
             className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
@@ -444,32 +482,85 @@ function PortfolioSection({
             onChange={(e) => setDescription(e.target.value)}
             required
           />
+          <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-white/50">Cover image (Works + Gallery poster)</p>
+            <p className="text-xs text-white/45">
+              Paste a URL, or use <strong className="text-white/70">Upload image</strong> — JPEG, PNG, WebP, GIF · max 4MB.
+            </p>
+            <input
+              className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+              placeholder="Image URL (https://… or /uploads/…)"
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              aria-label="Cover image URL"
+            />
+            <label className="flex cursor-pointer flex-col gap-1 text-xs text-cyan-200/90">
+              <span className="font-medium">Upload image file</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try {
+                    const url = await uploadFile(f);
+                    setImage(url);
+                  } catch (err) {
+                    onError(err instanceof Error ? err.message : "Upload failed");
+                  }
+                }}
+              />
+            </label>
+          </div>
+          <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-white/50">Looping video (optional)</p>
+            <p className="text-xs text-white/45">
+              Plays muted, looped on the project card and in Gallery. Paste URL or <strong className="text-white/70">Upload video</strong> — MP4, WebM, MOV · max 40MB. If both image + video exist, image is used as poster until video loads.
+            </p>
+            <input
+              className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+              placeholder="Video URL (https://… or /uploads/…)"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              aria-label="Looping video URL"
+            />
+            <label className="flex cursor-pointer flex-col gap-1 text-xs text-cyan-200/90">
+              <span className="font-medium">Upload video file</span>
+              <input
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime"
+                className="text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try {
+                    const url = await uploadFile(f);
+                    setVideoUrl(url);
+                  } catch (err) {
+                    onError(err instanceof Error ? err.message : "Upload failed");
+                  }
+                }}
+              />
+            </label>
+          </div>
           <input
             className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
-            placeholder="Image URL"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-          />
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            onChange={async (e) => {
-              const f = e.target.files?.[0];
-              if (!f) return;
-              try {
-                const url = await uploadImage(f);
-                setImage(url);
-              } catch (err) {
-                onError(err instanceof Error ? err.message : "Upload failed");
-              }
-            }}
-          />
-          <input
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
-            placeholder="Link (optional)"
+            placeholder="Project link (optional)"
             value={link}
             onChange={(e) => setLink(e.target.value)}
           />
+          <label className="block text-xs text-white/60">
+            Gallery caption (optional — text overlay on Gallery / visual snapshots)
+            <textarea
+              className="mt-1 w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white"
+              placeholder="Short line on the gallery tile…"
+              rows={2}
+              maxLength={500}
+              value={galleryCaption}
+              onChange={(e) => setGalleryCaption(e.target.value)}
+            />
+          </label>
           <div className="flex gap-2">
             <button type="submit" className="rounded-full bg-white px-4 py-2 text-sm text-black">
               Save
@@ -502,6 +593,7 @@ function SocialForm({
   const [instagram, setInstagram] = useState(initial.instagram ?? "");
   const [twitter, setTwitter] = useState(initial.twitter ?? "");
   const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -519,6 +611,8 @@ function SocialForm({
         }),
       });
       onSaved(updated);
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 2000);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -553,6 +647,11 @@ function SocialForm({
       >
         {saving ? "Saving…" : "Save links"}
       </button>
+      {savedFlash ? (
+        <p className="text-sm text-emerald-400/90" role="status">
+          Saved
+        </p>
+      ) : null}
     </form>
   );
 }

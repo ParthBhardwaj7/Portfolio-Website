@@ -24,7 +24,7 @@ export function HomeHero({
   return (
     <motion.section
       id="home"
-      className="scroll-mt-6 sm:scroll-mt-8 lg:scroll-mt-24"
+      className="snap-start scroll-mt-6 sm:scroll-mt-8 lg:scroll-mt-24 flex min-h-[100dvh] flex-col justify-center pb-16 sm:pb-20"
       initial={{ opacity: 0, y: 32 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1.15, ease: [0.22, 1, 0.36, 1] }}
@@ -34,7 +34,7 @@ export function HomeHero({
       </div>
 
       <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(260px,420px)] lg:items-start lg:gap-12 xl:gap-16">
-        <div className="min-w-0 space-y-6 sm:space-y-7">
+        <div className="min-w-0 self-start space-y-6 sm:space-y-7">
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -77,7 +77,7 @@ export function HomeHero({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1 }}
-          className="lg:pt-1"
+          className="min-w-0 self-start lg:pt-1"
         >
           <div className="flex min-w-0 items-center gap-4">
             <h2 className="shrink-0 text-xs uppercase tracking-[0.28em] text-muted sm:text-sm">

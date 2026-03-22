@@ -28,6 +28,8 @@ export async function POST(request: Request) {
         description: data.description,
         image: emptyToNull(data.image ?? undefined),
         link: emptyToNull(data.link ?? undefined),
+        galleryCaption: emptyToNull(data.galleryCaption ?? undefined),
+        videoUrl: emptyToNull(data.videoUrl ?? undefined),
       },
     });
     revalidatePublicPages();
