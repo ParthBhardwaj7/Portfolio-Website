@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id       String @id @default(uuid())
+  username String @unique
+  password String
+  createdAt DateTime @default(now())
+}
+
+model Portfolio {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  image       String?
+  link        String?
+  createdAt   DateTime @default(now())
+}
+
+model About {
+  id             String  @id @default(uuid())
+  content        String  @db.Text
+  profileImage   String?
+  /// Line under hero title (inquiry / contact text).
+  heroTagline    String? @db.Text
+  /// Text on the contact section photo card overlay.
+  contactCaption String? @db.Text
+}
+
+/// Grouped technical skills (e.g. Programming Languages, Backend Engineering).
+model SkillCategory {
+  id        String      @id @default(uuid())
+  title     String
+  sortOrder Int         @default(0)
+  items     SkillItem[]
+}
+
+/// One pill / line per item; label can be short or a comma-separated phrase.
+model SkillItem {
+  id         String        @id @default(uuid())
+  categoryId String
+  category   SkillCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  label      String        @db.Text
+  sortOrder  Int           @default(0)
+
+  @@index([categoryId])
+}
+
+model Social {
+  id        String  @id @default(uuid())
+  github    String?
+  linkedin  String?
+  instagram String?
+  twitter   String?
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  role      String
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+}
