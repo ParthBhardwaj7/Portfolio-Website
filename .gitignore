@@ -37,3 +37,6 @@ next-env.d.ts
 # uploads (local dev)
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# favicon zip source (extracted to src/app and public)
+favicon*.zip
