@@ -4,10 +4,10 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.XAI_API_KEY,
-  baseURL: "https://api.x.ai/v1",
+  baseURL: "https://api.groq.com/openai/v1",
 });
 
-const GROK_MODEL = process.env.GROK_MODEL ?? "grok-3-mini";
+const GROK_MODEL = process.env.GROK_MODEL ?? "llama-3.3-70b-versatile";
 
 type ChatMessage = {
   role: "user" | "assistant";
