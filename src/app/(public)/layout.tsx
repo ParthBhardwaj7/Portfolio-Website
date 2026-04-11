@@ -1,3 +1,4 @@
+import { ChatWidget } from "@/components/chat-widget";
 import { MobileSiteHeader } from "@/components/mobile-site-header";
 import { SidebarSocial } from "@/components/sidebar-social";
 import { SiteIntroOverlay } from "@/components/site-intro-overlay";
@@ -39,6 +40,7 @@ export default async function PublicLayout({ children }: { children: React.React
           {children}
         </main>
       </div>
+      <ChatWidget />
     </div>
   );
 }
