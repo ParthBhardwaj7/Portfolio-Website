@@ -23,7 +23,6 @@ function GalleryTile({ p, i }: { p: GalleryItem; i: number }) {
   const showVideo = Boolean(videoSrc && !videoBroken);
   const hasImage = Boolean(p.image);
   const showImage = hasImage && p.image && !imageFailed;
-  /** Cover photo + clip: show still first; hover/tap reveals video (poster alone is unreliable for Cloudinary). */
   const hasBoth = Boolean(showImage && showVideo && !reduceMotion);
 
   useEffect(() => {
@@ -51,23 +50,25 @@ function GalleryTile({ p, i }: { p: GalleryItem; i: number }) {
       ? { duration: 0.2 }
       : {
           duration: 0.85,
-          delay: Math.min(i * 0.1, 0.6),
+          delay: Math.min(i * 0.08, 0.5),
           ease: [0.22, 1, 0.36, 1] as const,
         };
 
-  const showVideoEl =
-    showVideo && !(reduceMotion && showImage);
+  const showVideoEl = showVideo && !(reduceMotion && showImage);
+
+  // For video-only tiles, use a fixed aspect ratio; for image tiles let the image dictate height
+  const isVideoOnly = showVideoEl && !showImage;
 
   return (
     <motion.div
       initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
+      viewport={{ once: true, amount: 0.1 }}
       transition={transition}
       className="group mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border"
     >
       <div
-        className={`relative aspect-[4/5] w-full ${hasBoth ? "cursor-pointer" : ""}`}
+        className={`relative w-full ${isVideoOnly ? "aspect-video" : ""} ${hasBoth ? "cursor-pointer" : ""}`}
         onMouseEnter={() => {
           if (!hasBoth || coarsePointer) return;
           setRevealVideo(true);
@@ -90,23 +91,24 @@ function GalleryTile({ p, i }: { p: GalleryItem; i: number }) {
             : undefined
         }
       >
+        {/* Image — natural height, not fill */}
         {showImage && p.image ? (
-          <Image
-            src={p.image}
-            alt=""
-            fill
-            className={
-              hasBoth && revealVideo
-                ? "object-cover opacity-0 transition-opacity duration-300"
-                : "object-cover transition-opacity duration-300"
-            }
-            sizes="(max-width: 640px) 100vw, 33vw"
-            loading="lazy"
-            unoptimized={isUnoptimizedImageSrc(p.image)}
-            onError={() => setImageFailed(true)}
-          />
+          <div className={hasBoth && revealVideo ? "opacity-0 transition-opacity duration-300" : "transition-opacity duration-300"}>
+            <Image
+              src={p.image}
+              alt={p.galleryCaption ?? ""}
+              width={800}
+              height={600}
+              style={{ width: "100%", height: "auto", display: "block" }}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              loading="lazy"
+              unoptimized={isUnoptimizedImageSrc(p.image)}
+              onError={() => setImageFailed(true)}
+            />
+          </div>
         ) : null}
 
+        {/* Video overlay (absolute only when hasBoth, so it sits over the image) */}
         {showVideoEl ? (
           <video
             ref={videoRef}
@@ -116,7 +118,7 @@ function GalleryTile({ p, i }: { p: GalleryItem; i: number }) {
                 ? `absolute inset-0 z-[1] h-full w-full object-cover transition-opacity duration-300 ${
                     revealVideo ? "opacity-100" : "pointer-events-none opacity-0"
                   }`
-                : "absolute inset-0 h-full w-full object-cover"
+                : "w-full object-cover"
             }
             muted
             loop
@@ -127,6 +129,7 @@ function GalleryTile({ p, i }: { p: GalleryItem; i: number }) {
           />
         ) : null}
 
+        {/* Caption */}
         {p.galleryCaption?.trim() ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-background/95 via-background/50 to-transparent px-3 pb-3 pt-10">
             <p className="text-center text-xs font-medium leading-snug text-foreground sm:text-sm">
@@ -135,12 +138,14 @@ function GalleryTile({ p, i }: { p: GalleryItem; i: number }) {
           </div>
         ) : null}
 
+        {/* Empty state */}
         {!showVideo && (!hasImage || imageFailed) ? (
-          <div className="flex h-full min-h-[120px] items-center justify-center bg-muted/20 px-2 text-center text-xs text-muted">
-            No media for this item
+          <div className="flex min-h-[120px] items-center justify-center bg-muted/20 px-2 text-center text-xs text-muted">
+            No media
           </div>
         ) : null}
 
+        {/* Video badge */}
         {hasBoth ? (
           <div
             className={`pointer-events-none absolute left-2 top-2 z-[2] rounded-full bg-background/80 px-2 py-0.5 text-[0.6rem] uppercase tracking-wider text-muted transition-opacity ${
@@ -159,7 +164,7 @@ export function GalleryMasonry({ items }: { items: GalleryItem[] }) {
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border px-6 py-16 text-center text-sm text-muted">
-        No gallery media yet. Add a cover image or video in Admin → Portfolio for a project.
+        No gallery media yet. Add a cover image or extra gallery images in Admin → Portfolio.
       </div>
     );
   }

@@ -15,9 +15,49 @@ const syne = Syne({
   display: "swap",
 });
 
+const heroName = process.env.NEXT_PUBLIC_HERO_NAME ?? "Parth";
+const heroTitle = process.env.NEXT_PUBLIC_HERO_TITLE ?? "Backend Developer";
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://localhost:3000";
+
+const title = `${heroName} — ${heroTitle}`;
+const description = `Personal portfolio of ${heroName}, a ${heroTitle} specialising in APIs, scalable systems, and full-stack web engineering.`;
+
 export const metadata: Metadata = {
-  title: "Portfolio | Backend Developer",
-  description: "Personal portfolio — backend engineering, APIs, and systems.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: title,
+    template: `%s | ${heroName}`,
+  },
+  description,
+  keywords: [heroName, heroTitle, "portfolio", "backend developer", "full stack", "web development", "API", "Next.js"],
+  authors: [{ name: heroName }],
+  creator: heroName,
+
+  openGraph: {
+    type: "website",
+    url: siteUrl,
+    title,
+    description,
+    siteName: `${heroName} Portfolio`,
+    locale: "en_US",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    creator: process.env.NEXT_PUBLIC_HERO_NAME ?? heroName,
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+
+  alternates: {
+    canonical: siteUrl,
+  },
 };
 
 export const viewport: Viewport = {

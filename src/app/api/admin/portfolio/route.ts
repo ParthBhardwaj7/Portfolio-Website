@@ -9,7 +9,10 @@ export async function GET() {
   const auth = await requireAdminSession();
   if (!auth.ok) return auth.response;
   try {
-    const items = await prisma.portfolio.findMany({ orderBy: { createdAt: "desc" } });
+    const items = await prisma.portfolio.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { images: { orderBy: { sortOrder: "asc" } } },
+    });
     return Response.json(items);
   } catch (e) {
     return handleRouteError(e);
@@ -31,6 +34,7 @@ export async function POST(request: Request) {
         galleryCaption: emptyToNull(data.galleryCaption ?? undefined),
         videoUrl: emptyToNull(data.videoUrl ?? undefined),
       },
+      include: { images: { orderBy: { sortOrder: "asc" } } },
     });
     revalidatePublicPages();
     return Response.json(item);

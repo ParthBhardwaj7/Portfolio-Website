@@ -27,7 +27,17 @@ export default async function HomePage() {
     about?.content ??
     "Backend engineer focused on APIs, data, and reliability. Connect your database to replace this text in the admin panel.";
 
-  const galleryItems = portfolio.filter((p) => p?.image || p?.videoUrl);
+  // Build gallery: cover image/video first, then extra gallery images per project
+  const galleryItems = portfolio.flatMap((p) => {
+    const tiles = [];
+    if (p?.image || p?.videoUrl) {
+      tiles.push({ id: p.id, image: p.image, videoUrl: p.videoUrl, galleryCaption: p.galleryCaption });
+    }
+    for (const img of p?.images ?? []) {
+      tiles.push({ id: `${p.id}-${img.id}`, image: img.url, videoUrl: null, galleryCaption: img.caption });
+    }
+    return tiles;
+  });
 
   const heroTagline = (about?.heroTagline?.trim() || DEFAULT_HERO_TAGLINE) as string;
   const contactCaption = (about?.contactCaption?.trim() || DEFAULT_CONTACT_CAPTION) as string;

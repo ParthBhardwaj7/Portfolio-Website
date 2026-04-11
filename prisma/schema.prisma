@@ -15,16 +15,30 @@ model Admin {
 }
 
 model Portfolio {
-  id              String   @id @default(uuid())
+  id              String           @id @default(uuid())
   title           String
-  description     String   @db.Text
+  description     String           @db.Text
   image           String?
   link            String?
   /// Short line on the Gallery (visual snapshots) image; optional.
-  galleryCaption  String?  @db.Text
+  galleryCaption  String?          @db.Text
   /// Looping muted video on Works + Gallery (MP4/WebM URL or /uploads/…); optional.
-  videoUrl        String?  @db.Text
-  createdAt       DateTime @default(now())
+  videoUrl        String?          @db.Text
+  createdAt       DateTime         @default(now())
+  images          PortfolioImage[]
+}
+
+/// Extra gallery images attached to a portfolio project.
+model PortfolioImage {
+  id          String    @id @default(uuid())
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  url         String    @db.Text
+  caption     String?   @db.Text
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([portfolioId])
 }
 
 model About {

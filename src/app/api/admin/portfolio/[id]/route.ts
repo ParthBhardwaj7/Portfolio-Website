@@ -28,6 +28,7 @@ export async function PUT(request: Request, ctx: { params: { id: string } }) {
           videoUrl: emptyToNull(data.videoUrl ?? undefined),
         }),
       },
+      include: { images: { orderBy: { sortOrder: "asc" } } },
     });
     revalidatePublicPages();
     return Response.json(item);

@@ -14,6 +14,13 @@ type About = {
   contactCaption: string | null;
   resumeUrl: string | null;
 };
+type PortfolioImage = {
+  id: string;
+  url: string;
+  caption: string | null;
+  sortOrder: number;
+};
+
 type PortfolioItem = {
   id: string;
   title: string;
@@ -23,6 +30,7 @@ type PortfolioItem = {
   galleryCaption: string | null;
   videoUrl: string | null;
   createdAt: string;
+  images: PortfolioImage[];
 };
 type Social = {
   id: string;
@@ -383,9 +391,11 @@ function PortfolioSection({
   const [link, setLink] = useState("");
   const [galleryCaption, setGalleryCaption] = useState("");
   const [savedFlash, setSavedFlash] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   function openNew() {
     setEditing("new");
+    setEditingItemId(null);
     setTitle("");
     setDescription("");
     setImage("");
@@ -396,6 +406,7 @@ function PortfolioSection({
 
   function openEdit(item: PortfolioItem) {
     setEditing(item);
+    setEditingItemId(item.id);
     setTitle(item.title);
     setDescription(item.description);
     setImage(item.image ?? "");
@@ -408,8 +419,9 @@ function PortfolioSection({
     e.preventDefault();
     onError(null);
     try {
+      let savedItem: PortfolioItem;
       if (editing === "new") {
-        await api("/api/admin/portfolio", {
+        savedItem = await api<PortfolioItem>("/api/admin/portfolio", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -421,8 +433,11 @@ function PortfolioSection({
             videoUrl: videoUrl.trim() || null,
           }),
         });
+        // Auto-switch to edit mode so admin can add extra gallery images
+        setEditing(savedItem);
+        setEditingItemId(savedItem.id);
       } else if (editing) {
-        await api(`/api/admin/portfolio/${editing.id}`, {
+        savedItem = await api<PortfolioItem>(`/api/admin/portfolio/${editing.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -435,8 +450,9 @@ function PortfolioSection({
             videoUrl: videoUrl.trim() || null,
           }),
         });
+        setEditing(savedItem);
+        setEditingItemId(savedItem.id);
       }
-      setEditing(null);
       await reload();
       setSavedFlash(true);
       window.setTimeout(() => setSavedFlash(false), 2000);
@@ -450,11 +466,15 @@ function PortfolioSection({
     onError(null);
     try {
       await api(`/api/admin/portfolio/${id}`, { method: "DELETE" });
+      if (editingItemId === id) setEditing(null);
       await reload();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Delete failed");
     }
   }
+
+  const currentImages =
+    editingItemId ? (items.find((i) => i.id === editingItemId)?.images ?? []) : [];
 
   return (
     <div className="space-y-8 text-white">
@@ -478,7 +498,10 @@ function PortfolioSection({
           >
             <div>
               <p className="font-medium">{it.title}</p>
-              <p className="text-xs text-white/50">{new Date(it.createdAt).toLocaleString()}</p>
+              <p className="text-xs text-white/50">
+                {new Date(it.createdAt).toLocaleString()}
+                {it.images.length > 0 ? ` · ${it.images.length} extra image${it.images.length !== 1 ? "s" : ""}` : ""}
+              </p>
             </div>
             <div className="flex gap-2">
               <button
@@ -501,116 +524,255 @@ function PortfolioSection({
       </ul>
 
       {editing && (
-        <form onSubmit={save} className="space-y-5 rounded-xl border border-white/20 p-6">
-          <h3 className="font-medium">{editing === "new" ? "New project" : "Edit project"}</h3>
-          <input
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          <textarea
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
-            placeholder="Description"
-            rows={4}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-          />
-          <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-white/50">Cover image (Works + Gallery poster)</p>
-            <p className="text-xs text-white/45">
-              Paste a URL, or use <strong className="text-white/70">Upload image</strong> — JPEG, PNG, WebP, GIF · max 4MB.
-            </p>
+        <div className="space-y-6 rounded-xl border border-white/20 p-6">
+          <h3 className="font-medium">{editing === "new" ? "New project" : `Edit: ${title}`}</h3>
+          <form onSubmit={save} className="space-y-5">
             <input
               className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
-              placeholder="Image URL (https://… or /uploads/…)"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              aria-label="Cover image URL"
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
             />
-            <label className="flex cursor-pointer flex-col gap-1 text-xs text-cyan-200/90">
-              <span className="font-medium">Upload image file</span>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  try {
-                    const url = await uploadFile(f);
-                    setImage(url);
-                  } catch (err) {
-                    onError(err instanceof Error ? err.message : "Upload failed");
-                  }
-                }}
-              />
-            </label>
-          </div>
-          <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-white/50">Looping video (optional)</p>
-            <p className="text-xs text-white/45">
-              Plays muted, looped on the project card and in Gallery. Paste URL or <strong className="text-white/70">Upload video</strong> — MP4, WebM, MOV · max 40MB. If both image + video exist, image is used as poster until video loads.
-            </p>
-            <input
-              className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
-              placeholder="Video URL (https://… or /uploads/…)"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              aria-label="Looping video URL"
-            />
-            <label className="flex cursor-pointer flex-col gap-1 text-xs text-cyan-200/90">
-              <span className="font-medium">Upload video file</span>
-              <input
-                type="file"
-                accept="video/mp4,video/webm,video/quicktime"
-                className="text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  try {
-                    const url = await uploadFile(f);
-                    setVideoUrl(url);
-                  } catch (err) {
-                    onError(err instanceof Error ? err.message : "Upload failed");
-                  }
-                }}
-              />
-            </label>
-          </div>
-          <input
-            className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
-            placeholder="Project link (optional)"
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-          />
-          <label className="block text-xs text-white/60">
-            Gallery caption (optional — text overlay on Gallery / visual snapshots)
             <textarea
-              className="mt-1 w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white"
-              placeholder="Short line on the gallery tile…"
-              rows={2}
-              maxLength={500}
-              value={galleryCaption}
-              onChange={(e) => setGalleryCaption(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+              placeholder="Description"
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
             />
-          </label>
-          <div className="flex gap-2">
-            <button type="submit" className="rounded-full bg-white px-4 py-2 text-sm text-black">
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditing(null)}
-              className="rounded-full border border-white/20 px-4 py-2 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+            <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-white/50">Cover image (Works card + Gallery poster)</p>
+              <p className="text-xs text-white/45">
+                Paste a URL, or upload — JPEG, PNG, WebP, GIF · max 4MB.
+              </p>
+              <input
+                className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+                placeholder="Image URL (https://… or /uploads/…)"
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                aria-label="Cover image URL"
+              />
+              <label className="flex cursor-pointer flex-col gap-1 text-xs text-cyan-200/90">
+                <span className="font-medium">Upload image file</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    try { setImage(await uploadFile(f)); } catch (err) {
+                      onError(err instanceof Error ? err.message : "Upload failed");
+                    }
+                  }}
+                />
+              </label>
+            </div>
+            <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-white/50">Looping video (optional)</p>
+              <p className="text-xs text-white/45">
+                Plays muted on the card and in Gallery. MP4, WebM, MOV · max 40MB.
+              </p>
+              <input
+                className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+                placeholder="Video URL (https://… or /uploads/…)"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                aria-label="Looping video URL"
+              />
+              <label className="flex cursor-pointer flex-col gap-1 text-xs text-cyan-200/90">
+                <span className="font-medium">Upload video file</span>
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime"
+                  className="text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    try { setVideoUrl(await uploadFile(f)); } catch (err) {
+                      onError(err instanceof Error ? err.message : "Upload failed");
+                    }
+                  }}
+                />
+              </label>
+            </div>
+            <input
+              className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+              placeholder="Project link (optional)"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+            />
+            <label className="block text-xs text-white/60">
+              Gallery caption (optional — shown as overlay on the cover image in Gallery)
+              <textarea
+                className="mt-1 w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white"
+                placeholder="Short line on the gallery tile…"
+                rows={2}
+                maxLength={500}
+                value={galleryCaption}
+                onChange={(e) => setGalleryCaption(e.target.value)}
+              />
+            </label>
+            <div className="flex gap-2">
+              <button type="submit" className="rounded-full bg-white px-4 py-2 text-sm text-black">
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEditing(null); setEditingItemId(null); }}
+                className="rounded-full border border-white/20 px-4 py-2 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+
+          {/* Extra gallery images — only for saved projects */}
+          {editingItemId && (
+            <GalleryImagesManager
+              portfolioId={editingItemId}
+              images={currentImages}
+              uploadFile={uploadFile}
+              onError={onError}
+              onChanged={reload}
+            />
+          )}
+        </div>
       )}
+    </div>
+  );
+}
+
+function GalleryImagesManager({
+  portfolioId,
+  images,
+  uploadFile,
+  onError,
+  onChanged,
+}: {
+  portfolioId: string;
+  images: PortfolioImage[];
+  uploadFile: (f: File) => Promise<string>;
+  onError: (s: string | null) => void;
+  onChanged: () => Promise<void>;
+}) {
+  const [addUrl, setAddUrl] = useState("");
+  const [addCaption, setAddCaption] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  async function addImage() {
+    const url = addUrl.trim();
+    if (!url) return;
+    onError(null);
+    setAdding(true);
+    try {
+      await api(`/api/admin/portfolio/${portfolioId}/images`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, caption: addCaption.trim() || null }),
+      });
+      setAddUrl("");
+      setAddCaption("");
+      await onChanged();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to add image");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function removeImage(imageId: string) {
+    if (!confirm("Remove this gallery image?")) return;
+    onError(null);
+    try {
+      await api(`/api/admin/portfolio/${portfolioId}/images/${imageId}`, { method: "DELETE" });
+      await onChanged();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to remove image");
+    }
+  }
+
+  return (
+    <div className="space-y-4 border-t border-white/10 pt-5">
+      <div>
+        <p className="text-xs font-medium uppercase tracking-wide text-white/50">Extra gallery images</p>
+        <p className="mt-1 text-xs text-white/40">
+          These appear in the Gallery section and in the project detail modal carousel. Add as many as you like.
+        </p>
+      </div>
+
+      {images.length > 0 ? (
+        <ul className="space-y-2">
+          {images.map((img, idx) => (
+            <li key={img.id} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img.url}
+                alt={img.caption ?? ""}
+                className="h-10 w-14 flex-shrink-0 rounded object-cover"
+                loading="lazy"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs text-white/80">{img.url}</p>
+                {img.caption ? <p className="truncate text-xs text-white/45">{img.caption}</p> : null}
+              </div>
+              <span className="text-xs text-white/30">#{idx + 1}</span>
+              <button
+                type="button"
+                onClick={() => void removeImage(img.id)}
+                className="text-xs text-red-300/80 hover:text-red-200 transition-colors"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-white/30">No extra images yet.</p>
+      )}
+
+      <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+        <p className="text-xs font-medium text-white/60">Add image</p>
+        <input
+          className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+          placeholder="Image URL (https://… or /uploads/…)"
+          value={addUrl}
+          onChange={(e) => setAddUrl(e.target.value)}
+        />
+        <label className="flex cursor-pointer flex-col gap-1 text-xs text-cyan-200/90">
+          <span className="font-medium">Or upload image file</span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              try { setAddUrl(await uploadFile(f)); } catch (err) {
+                onError(err instanceof Error ? err.message : "Upload failed");
+              }
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <input
+          className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+          placeholder="Caption (optional)"
+          value={addCaption}
+          onChange={(e) => setAddCaption(e.target.value)}
+          maxLength={500}
+        />
+        <button
+          type="button"
+          onClick={() => void addImage()}
+          disabled={adding || !addUrl.trim()}
+          className="rounded-full bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20 disabled:opacity-40 transition-colors"
+        >
+          {adding ? "Adding…" : "Add to gallery"}
+        </button>
+      </div>
     </div>
   );
 }

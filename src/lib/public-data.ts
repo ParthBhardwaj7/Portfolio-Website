@@ -32,7 +32,10 @@ export const getPublicSkillCategories = cache(async (): Promise<PublicSkillCateg
 
 export const getPublicPortfolio = cache(async () => {
   try {
-    const rows = await prisma.portfolio.findMany({ orderBy: { createdAt: "desc" } });
+    const rows = await prisma.portfolio.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { images: { orderBy: { sortOrder: "asc" } } },
+    });
     return Array.isArray(rows) ? rows : [];
   } catch {
     return [];
