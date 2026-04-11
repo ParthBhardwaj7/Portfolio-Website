@@ -8,24 +8,24 @@ datasource db {
 }
 
 model Admin {
-  id       String @id @default(uuid())
-  username String @unique
-  password String
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
   createdAt DateTime @default(now())
 }
 
 model Portfolio {
-  id              String           @id @default(uuid())
-  title           String
-  description     String           @db.Text
-  image           String?
-  link            String?
+  id             String           @id @default(uuid())
+  title          String
+  description    String           @db.Text
+  image          String?
+  link           String?
   /// Short line on the Gallery (visual snapshots) image; optional.
-  galleryCaption  String?          @db.Text
+  galleryCaption String?          @db.Text
   /// Looping muted video on Works + Gallery (MP4/WebM URL or /uploads/…); optional.
-  videoUrl        String?          @db.Text
-  createdAt       DateTime         @default(now())
-  images          PortfolioImage[]
+  videoUrl       String?          @db.Text
+  createdAt      DateTime         @default(now())
+  images         PortfolioImage[]
 }
 
 /// Extra gallery images attached to a portfolio project.
@@ -49,8 +49,12 @@ model About {
   heroTagline    String? @db.Text
   /// Text on the contact section photo card overlay.
   contactCaption String? @db.Text
-  /// Public PDF URL for “Download résumé” (https://…, Cloudinary raw, or /uploads/…).
+  /// Public PDF URL for "Download résumé" (https://…, Cloudinary raw, or /uploads/…).
   resumeUrl      String? @db.Text
+  /// Browser tab icon / Google search left icon (PNG, ICO, SVG — square, min 32×32).
+  favicon        String? @db.Text
+  /// Open Graph / social-share preview image shown when site is shared or searched (1200×630 recommended).
+  ogImage        String? @db.Text
 }
 
 /// Grouped technical skills (e.g. Programming Languages, Backend Engineering).

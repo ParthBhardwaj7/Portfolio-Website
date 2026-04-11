@@ -13,6 +13,8 @@ type About = {
   heroTagline: string | null;
   contactCaption: string | null;
   resumeUrl: string | null;
+  favicon: string | null;
+  ogImage: string | null;
 };
 type PortfolioImage = {
   id: string;
@@ -231,6 +233,8 @@ function AboutForm({
   const [heroTagline, setHeroTagline] = useState(initial.heroTagline ?? "");
   const [contactCaption, setContactCaption] = useState(initial.contactCaption ?? "");
   const [resumeUrl, setResumeUrl] = useState(initial.resumeUrl ?? "");
+  const [favicon, setFavicon] = useState(initial.favicon ?? "");
+  const [ogImage, setOgImage] = useState(initial.ogImage ?? "");
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
 
@@ -240,6 +244,8 @@ function AboutForm({
     setHeroTagline(initial.heroTagline ?? "");
     setContactCaption(initial.contactCaption ?? "");
     setResumeUrl(initial.resumeUrl ?? "");
+    setFavicon(initial.favicon ?? "");
+    setOgImage(initial.ogImage ?? "");
   }, [initial]);
 
   async function save(e: React.FormEvent) {
@@ -256,6 +262,8 @@ function AboutForm({
           heroTagline: heroTagline.trim() || null,
           contactCaption: contactCaption.trim() || null,
           resumeUrl: resumeUrl.trim() || null,
+          favicon: favicon.trim() || null,
+          ogImage: ogImage.trim() || null,
         }),
       });
       onSaved(updated);
@@ -324,6 +332,118 @@ function AboutForm({
           }
         }}
       />
+
+      {/* Site branding */}
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4 space-y-5">
+        <div>
+          <p className="text-sm font-medium text-white/80">Site branding</p>
+          <p className="mt-1 text-xs text-white/45">
+            These control the browser tab icon and the image that appears when your site is shared or found in search results.
+          </p>
+        </div>
+
+        {/* Favicon */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-white/50">
+            Favicon — browser tab &amp; search icon
+          </p>
+          <p className="text-xs text-white/40">
+            Upload a square PNG or ICO (min 32×32, ideally 512×512). Appears in the browser tab and on the left side of Google search results.
+          </p>
+          <input
+            className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white"
+            value={favicon}
+            onChange={(e) => setFavicon(e.target.value)}
+            placeholder="https://… or /uploads/…"
+            aria-label="Favicon URL"
+          />
+          {favicon.trim() ? (
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={favicon.trim()}
+                alt="Favicon preview"
+                className="h-8 w-8 rounded border border-white/20 object-contain bg-white/10"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+              <span className="text-xs text-white/40">Preview</span>
+            </div>
+          ) : null}
+          <label className="flex cursor-pointer flex-col gap-1 text-xs text-cyan-200/90">
+            <span className="font-medium">Upload favicon image</span>
+            <input
+              type="file"
+              accept="image/png,image/x-icon,image/svg+xml,image/jpeg,image/webp"
+              className="text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
+              aria-label="Upload favicon file"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                onError(null);
+                try {
+                  const url = await uploadFile(f);
+                  setFavicon(url);
+                } catch (err) {
+                  onError(err instanceof Error ? err.message : "Upload failed");
+                }
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+
+        {/* OG Image */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-white/50">
+            Social preview image (Open Graph)
+          </p>
+          <p className="text-xs text-white/40">
+            Shown when your site link is shared on WhatsApp, LinkedIn, Twitter, etc. Recommended size: 1200×630 px (JPG or PNG).
+          </p>
+          <input
+            className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white"
+            value={ogImage}
+            onChange={(e) => setOgImage(e.target.value)}
+            placeholder="https://… or /uploads/…"
+            aria-label="OG image URL"
+          />
+          {ogImage.trim() ? (
+            <div className="space-y-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={ogImage.trim()}
+                alt="OG image preview"
+                className="w-full max-w-sm rounded-lg border border-white/20 object-cover"
+                style={{ aspectRatio: "1200/630" }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+              <p className="text-xs text-white/35">Preview (1200×630 ratio)</p>
+            </div>
+          ) : null}
+          <label className="flex cursor-pointer flex-col gap-1 text-xs text-cyan-200/90">
+            <span className="font-medium">Upload OG image</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="text-xs file:mr-2 file:rounded file:border-0 file:bg-white/15 file:px-2 file:py-1"
+              aria-label="Upload OG image file"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                onError(null);
+                try {
+                  const url = await uploadFile(f);
+                  setOgImage(url);
+                } catch (err) {
+                  onError(err instanceof Error ? err.message : "Upload failed");
+                }
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+      </div>
+
       <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
         <p className="text-sm text-white/70">Résumé (PDF)</p>
         <p className="mt-1 text-xs text-white/45">

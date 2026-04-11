@@ -32,6 +32,8 @@ export async function PUT(request: Request) {
     const heroTagline = emptyToNull(data.heroTagline ?? undefined);
     const contactCaption = emptyToNull(data.contactCaption ?? undefined);
     const resumeUrl = emptyToNull(data.resumeUrl ?? undefined);
+    const favicon = emptyToNull(data.favicon ?? undefined);
+    const ogImage = emptyToNull(data.ogImage ?? undefined);
 
     const payload = {
       content: data.content,
@@ -39,6 +41,8 @@ export async function PUT(request: Request) {
       heroTagline,
       contactCaption,
       resumeUrl,
+      favicon,
+      ogImage,
     };
 
     if (!about) {

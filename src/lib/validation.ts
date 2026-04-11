@@ -66,6 +66,8 @@ export const aboutUpdateSchema = z.object({
   heroTagline: z.string().max(800).optional().nullable(),
   contactCaption: z.string().max(800).optional().nullable(),
   resumeUrl: optionalUrlOrPath,
+  favicon: optionalUrlOrPath,
+  ogImage: optionalUrlOrPath,
 });
 
 export const socialUpdateSchema = z.object({
