@@ -158,18 +158,26 @@ export function ChatWidget() {
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Scroll to bottom whenever messages update
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Focus input when panel opens
+  // Focus input when panel opens; clean up timeout on unmount
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 150);
-    }
+    if (!open) return;
+    const id = setTimeout(() => inputRef.current?.focus(), 150);
+    return () => clearTimeout(id);
   }, [open]);
+
+  // Cancel any in-flight stream when widget unmounts
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   // ── Core send function ──────────────────────────────────────────────────────
 
@@ -193,6 +201,11 @@ export function ChatWidget() {
     ]);
 
     try {
+      // Cancel any previous request
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       // Build history for the API (exclude the in-progress assistant placeholder)
       const history = [...messages, userMsg].map((m) => ({
         role: m.role,
@@ -203,6 +216,7 @@ export function ChatWidget() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: history }),
+        signal: controller.signal,
       });
 
       if (!res.ok || !res.body) {
@@ -275,6 +289,8 @@ export function ChatWidget() {
         )
       );
     } catch (err) {
+      // Ignore aborted requests (user closed/reopened chat)
+      if (err instanceof Error && err.name === "AbortError") return;
       const msg =
         err instanceof Error ? err.message : "Something went wrong. Try again.";
       setError(msg);
@@ -432,6 +448,7 @@ export function ChatWidget() {
                   onKeyDown={handleKeyDown}
                   placeholder="Ask something…"
                   rows={1}
+                  maxLength={1000}
                   disabled={busy}
                   className="flex-1 resize-none rounded-xl border border-[var(--border)] bg-[var(--foreground)]/[0.04] dark:bg-white/[0.05] px-3 py-2 text-[13px] text-[var(--foreground)] placeholder:text-[var(--muted)] outline-none transition focus:border-[var(--accent)] focus:ring-0 disabled:opacity-50 max-h-[120px] leading-relaxed"
                   style={{ scrollbarWidth: "none" }}

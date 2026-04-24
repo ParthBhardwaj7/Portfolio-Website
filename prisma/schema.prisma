@@ -92,3 +92,20 @@ model Contact {
   message   String   @db.Text
   createdAt DateTime @default(now())
 }
+
+/// Certificate / credential earned by the portfolio owner.
+model Certification {
+  id            String   @id @default(uuid())
+  title         String
+  issuer        String
+  /// Free-form date string e.g. "March 2024" or "2024-03".
+  issueDate     String?
+  /// URL of the certificate image (PNG/JPG/WebP).
+  imageUrl      String?  @db.Text
+  /// URL of the certificate PDF (Cloudinary raw or /uploads/…).
+  pdfUrl        String?  @db.Text
+  /// External credential verification URL.
+  credentialUrl String?  @db.Text
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+}

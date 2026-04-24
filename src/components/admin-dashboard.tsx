@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminSkillsPanel } from "@/components/admin-skills-panel";
+import { AdminCertificationsPanel } from "@/components/admin-certifications-panel";
 
-type Tab = "about" | "portfolio" | "skills" | "social" | "contacts";
+type Tab = "about" | "portfolio" | "skills" | "social" | "contacts" | "certifications";
 
 type About = {
   id: string;
@@ -164,6 +165,7 @@ export function AdminDashboard() {
             ["about", "About"],
             ["portfolio", "Portfolio"],
             ["skills", "Skills"],
+            ["certifications", "Certificates"],
             ["social", "Social"],
             ["contacts", "Contacts"],
           ] as const
@@ -213,6 +215,8 @@ export function AdminDashboard() {
       )}
 
       {tab === "contacts" && <ContactsTable items={contacts} reload={loadContacts} onError={setError} />}
+
+      {tab === "certifications" && <AdminCertificationsPanel onError={setError} />}
     </div>
   );
 }

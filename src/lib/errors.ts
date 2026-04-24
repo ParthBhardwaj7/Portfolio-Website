@@ -26,6 +26,12 @@ export function handleRouteError(e: unknown) {
     if (e.code === "P2002") {
       return jsonError("A record with this value already exists.", 409, "DUPLICATE");
     }
+    if (e.code === "P2025") {
+      return jsonError("Record not found.", 404, "NOT_FOUND");
+    }
+    if (e.code === "P2003") {
+      return jsonError("Related record not found.", 400, "FK_CONSTRAINT");
+    }
   }
   if (isInitError(e)) {
     return jsonError("Database unavailable. Try again later.", 503, "DB_UNAVAILABLE");

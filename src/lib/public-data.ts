@@ -42,6 +42,17 @@ export const getPublicPortfolio = cache(async () => {
   }
 });
 
+export const getPublicCertifications = cache(async () => {
+  try {
+    const rows = await prisma.certification.findMany({
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    });
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+});
+
 export const getPublicSocial = cache(async () => {
   try {
     const s = await prisma.social.findFirst();

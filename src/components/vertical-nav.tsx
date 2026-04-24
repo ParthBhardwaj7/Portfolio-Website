@@ -7,6 +7,7 @@ const links: { href: string; label: string; id: SectionId }[] = [
   { href: "#home", label: "Home", id: "home" },
   { href: "#works", label: "Works", id: "works" },
   { href: "#gallery", label: "Gallery", id: "gallery" },
+  { href: "#certifications", label: "Certs", id: "certifications" },
   { href: "#contact", label: "Contact", id: "contact" },
 ];
 

@@ -76,3 +76,15 @@ export const socialUpdateSchema = z.object({
   instagram: optionalUrlOrPath,
   twitter: optionalUrlOrPath,
 });
+
+export const certificationCreateSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200),
+  issuer: z.string().min(1, "Issuer is required").max(200),
+  issueDate: z.string().max(100).optional().nullable(),
+  imageUrl: optionalUrlOrPath,
+  pdfUrl: optionalUrlOrPath,
+  credentialUrl: optionalUrlOrPath,
+  sortOrder: z.number().int().min(0).max(9999).optional(),
+});
+
+export const certificationUpdateSchema = certificationCreateSchema.partial();
