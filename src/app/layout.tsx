@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { DM_Sans, Syne } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { getPublicAbout } from "@/lib/public-data";
+import { getPublicAbout, getPublicSocial } from "@/lib/public-data";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -90,16 +90,49 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const social = await getPublicSocial().catch(() => null);
+  const sameAs = [
+    social?.github,
+    social?.linkedin,
+    social?.instagram,
+    social?.twitter,
+  ].filter((v): v is string => Boolean(v && v.trim()));
+
+  const personSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: heroName,
+    jobTitle: heroTitle,
+    url: siteUrl,
+    ...(sameAs.length > 0 ? { sameAs } : {}),
+  };
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: `${heroName} Portfolio`,
+    url: siteUrl,
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <script
+          type="application/ld+json"
+          // safe because schema object is controlled server-side
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
       </head>
       <body className={`${dmSans.variable} ${syne.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>

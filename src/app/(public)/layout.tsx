@@ -1,4 +1,4 @@
-import { ChatWidget } from "@/components/chat-widget";
+import dynamic from "next/dynamic";
 import { MobileSiteHeader } from "@/components/mobile-site-header";
 import { SidebarSocial } from "@/components/sidebar-social";
 import { SiteIntroOverlay } from "@/components/site-intro-overlay";
@@ -7,6 +7,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { VerticalNav } from "@/components/vertical-nav";
 import { getPublicAbout, getPublicSocial } from "@/lib/public-data";
 import { resolvePublicResumeUrl } from "@/lib/site-config";
+
+const ChatWidget = dynamic(() => import("@/components/chat-widget").then((m) => m.ChatWidget), {
+  ssr: false,
+});
 
 /** Cached static shell; admin mutations call `revalidatePublicPages()` for instant updates. */
 export const revalidate = 60;
