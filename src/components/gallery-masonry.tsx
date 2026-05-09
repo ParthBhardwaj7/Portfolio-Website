@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { isUnoptimizedImageSrc } from "@/lib/remote-image";
 import { useEffect, useRef, useState } from "react";
 
 export type GalleryItem = {
@@ -102,7 +101,6 @@ function GalleryTile({ p, i }: { p: GalleryItem; i: number }) {
               style={{ width: "100%", height: "auto", display: "block" }}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               loading="lazy"
-              unoptimized={isUnoptimizedImageSrc(p.image)}
               onError={() => setImageFailed(true)}
             />
           </div>

@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { isUnoptimizedImageSrc } from "@/lib/remote-image";
 import { useState } from "react";
 
 export type PortfolioImage = {
@@ -85,7 +84,6 @@ export function PortfolioCard({
               className="object-cover transition duration-500 group-hover:scale-[1.02]"
               sizes="(max-width: 768px) 100vw, 50vw"
               loading="lazy"
-              unoptimized={isUnoptimizedImageSrc(item.image)}
               onError={() => setImageFailed(true)}
             />
           ) : null}

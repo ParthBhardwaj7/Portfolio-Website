@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { isUnoptimizedImageSrc } from "@/lib/remote-image";
 import type { PortfolioItem } from "@/components/portfolio-card";
 
 function useLockBodyScroll(active: boolean) {
@@ -79,7 +78,6 @@ function MediaViewer({ slides, idx }: { slides: MediaSlide[]; idx: number }) {
           fill
           className="object-contain"
           sizes="(max-width: 768px) 100vw, 700px"
-          unoptimized={isUnoptimizedImageSrc(slide.src)}
           onError={() => setImageFailed(true)}
         />
       ) : (
