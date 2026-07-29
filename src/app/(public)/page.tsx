@@ -101,7 +101,25 @@ export default async function HomePage() {
         />
       </ScrollSection>
 
+      <ScrollSection id="leaderboard" className="space-y-8 pt-20 sm:pt-24 lg:pt-28">
+        <SectionHeading
+          title="Live Leaderboard"
+          subtitle="Real-time tournament updates synced live."
+        />
+        <div className="w-full max-w-5xl mx-auto px-4">
+          <iframe 
+            src="https://leaderboard.parthbhardwaj.com/embed/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5" 
+            width="100%" 
+            height="700px" 
+            style={{ border: 'none', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)', overflow: 'hidden' }}
+            scrolling="no"
+            title="Live Leaderboard"
+          />
+        </div>
+      </ScrollSection>
+
       <SiteFooter />
     </div>
   );
 }
+
