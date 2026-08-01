@@ -7,6 +7,7 @@ import { SectionHeading } from "@/components/section-heading";
 import { SiteFooter } from "@/components/site-footer";
 import { TechnicalSkillsSection } from "@/components/technical-skills-section";
 import { CertificationsSection } from "@/components/certifications-section";
+import { LeaderboardWidget } from "@/components/leaderboard-widget";
 import {
   getPublicAbout,
   getPublicCertifications,
@@ -107,14 +108,7 @@ export default async function HomePage() {
           subtitle="Real-time tournament updates synced live."
         />
         <div className="w-full max-w-5xl mx-auto px-4">
-          <iframe 
-            src="https://leaderboard.parthbhardwaj.com/embed/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5" 
-            width="100%" 
-            height="700px" 
-            style={{ border: 'none', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)', overflow: 'hidden' }}
-            scrolling="no"
-            title="Live Leaderboard"
-          />
+          <LeaderboardWidget />
         </div>
       </ScrollSection>
 
