@@ -7,7 +7,6 @@ import { SectionHeading } from "@/components/section-heading";
 import { SiteFooter } from "@/components/site-footer";
 import { TechnicalSkillsSection } from "@/components/technical-skills-section";
 import { CertificationsSection } from "@/components/certifications-section";
-import { LeaderboardWidget } from "@/components/leaderboard-widget";
 import {
   getPublicAbout,
   getPublicCertifications,
@@ -100,16 +99,6 @@ export default async function HomePage() {
           displayName={String(siteConfig.heroName ?? "Portfolio")}
           contactCaption={contactCaption}
         />
-      </ScrollSection>
-
-      <ScrollSection id="leaderboard" className="space-y-8 pt-20 sm:pt-24 lg:pt-28">
-        <SectionHeading
-          title="Live Leaderboard"
-          subtitle="Real-time tournament updates synced live."
-        />
-        <div className="w-full max-w-5xl mx-auto px-4">
-          <LeaderboardWidget />
-        </div>
       </ScrollSection>
 
       <SiteFooter />
