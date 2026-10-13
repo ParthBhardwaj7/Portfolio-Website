@@ -73,3 +73,14 @@ export const getPublicSocial = cache(async () => {
     };
   }
 });
+
+export const getPublicExperience = cache(async () => {
+  try {
+    const rows = await prisma.experience.findMany({
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+});

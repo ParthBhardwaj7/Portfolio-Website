@@ -27,6 +27,14 @@ export async function PUT(request: Request, ctx: { params: { id: string } }) {
         ...(data.videoUrl !== undefined && {
           videoUrl: emptyToNull(data.videoUrl ?? undefined),
         }),
+        ...(data.slug !== undefined && { slug: emptyToNull(data.slug ?? undefined) }),
+        ...(data.techStack !== undefined && { techStack: emptyToNull(data.techStack ?? undefined) }),
+        ...(data.liveUrl !== undefined && { liveUrl: emptyToNull(data.liveUrl ?? undefined) }),
+        ...(data.problem !== undefined && { problem: emptyToNull(data.problem ?? undefined) }),
+        ...(data.solution !== undefined && { solution: emptyToNull(data.solution ?? undefined) }),
+        ...(data.architecture !== undefined && { architecture: emptyToNull(data.architecture ?? undefined) }),
+        ...(data.featured !== undefined && { featured: data.featured }),
+        ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
       },
       include: { images: { orderBy: { sortOrder: "asc" } } },
     });

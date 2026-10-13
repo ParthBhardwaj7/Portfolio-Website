@@ -4,8 +4,18 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminSkillsPanel } from "@/components/admin-skills-panel";
 import { AdminCertificationsPanel } from "@/components/admin-certifications-panel";
+import { AdminExperiencePanel } from "@/components/admin-experience-panel";
+import { AdminAuditPanel } from "@/components/admin-audit-panel";
 
-type Tab = "about" | "portfolio" | "skills" | "social" | "contacts" | "certifications";
+type Tab =
+  | "about"
+  | "portfolio"
+  | "skills"
+  | "social"
+  | "contacts"
+  | "certifications"
+  | "experience"
+  | "audit";
 
 type About = {
   id: string;
@@ -16,6 +26,7 @@ type About = {
   resumeUrl: string | null;
   favicon: string | null;
   ogImage: string | null;
+  chatEnabled: boolean;
 };
 type PortfolioImage = {
   id: string;
@@ -28,6 +39,14 @@ type PortfolioItem = {
   id: string;
   title: string;
   description: string;
+  slug: string | null;
+  techStack: string | null;
+  liveUrl: string | null;
+  problem: string | null;
+  solution: string | null;
+  architecture: string | null;
+  featured: boolean;
+  sortOrder: number;
   image: string | null;
   link: string | null;
   galleryCaption: string | null;
@@ -166,8 +185,10 @@ export function AdminDashboard() {
             ["portfolio", "Portfolio"],
             ["skills", "Skills"],
             ["certifications", "Certificates"],
+            ["experience", "Experience"],
             ["social", "Social"],
             ["contacts", "Contacts"],
+            ["audit", "Audit"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -217,6 +238,10 @@ export function AdminDashboard() {
       {tab === "contacts" && <ContactsTable items={contacts} reload={loadContacts} onError={setError} />}
 
       {tab === "certifications" && <AdminCertificationsPanel onError={setError} />}
+
+      {tab === "experience" && <AdminExperiencePanel onError={setError} />}
+
+      {tab === "audit" && <AdminAuditPanel onError={setError} />}
     </div>
   );
 }
@@ -239,6 +264,7 @@ function AboutForm({
   const [resumeUrl, setResumeUrl] = useState(initial.resumeUrl ?? "");
   const [favicon, setFavicon] = useState(initial.favicon ?? "");
   const [ogImage, setOgImage] = useState(initial.ogImage ?? "");
+  const [chatEnabled, setChatEnabled] = useState(initial.chatEnabled ?? false);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
 
@@ -250,6 +276,7 @@ function AboutForm({
     setResumeUrl(initial.resumeUrl ?? "");
     setFavicon(initial.favicon ?? "");
     setOgImage(initial.ogImage ?? "");
+    setChatEnabled(initial.chatEnabled ?? false);
   }, [initial]);
 
   async function save(e: React.FormEvent) {
@@ -268,6 +295,7 @@ function AboutForm({
           resumeUrl: resumeUrl.trim() || null,
           favicon: favicon.trim() || null,
           ogImage: ogImage.trim() || null,
+          chatEnabled,
         }),
       });
       onSaved(updated);
@@ -292,6 +320,31 @@ function AboutForm({
           required
         />
       </label>
+      <div className="flex items-center justify-between gap-4 rounded-lg border border-white/15 bg-black/30 px-4 py-3">
+        <div className="min-w-0">
+          <div className="text-sm font-medium text-white">AI chat widget</div>
+          <div className="mt-0.5 text-xs text-white/50">
+            Show the AI assistant in the bottom-right of the public site. Provider is
+            configured server-side via AI_API_KEY / AI_BASE_URL / AI_MODEL.
+          </div>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={chatEnabled}
+          aria-label="Toggle AI chat widget"
+          onClick={() => setChatEnabled((v: boolean) => !v)}
+          className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+            chatEnabled ? "bg-emerald-500" : "bg-white/20"
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+              chatEnabled ? "left-[22px]" : "left-0.5"
+            }`}
+          />
+        </button>
+      </div>
       <label className="block text-sm text-white/70">
         Hero line (under your title — e.g. inquiry + email). Leave empty to use site default.
         <textarea
@@ -514,6 +567,14 @@ function PortfolioSection({
   const [videoUrl, setVideoUrl] = useState("");
   const [link, setLink] = useState("");
   const [galleryCaption, setGalleryCaption] = useState("");
+  const [slug, setSlug] = useState("");
+  const [techStack, setTechStack] = useState("");
+  const [liveUrl, setLiveUrl] = useState("");
+  const [problem, setProblem] = useState("");
+  const [solution, setSolution] = useState("");
+  const [architecture, setArchitecture] = useState("");
+  const [featured, setFeatured] = useState(false);
+  const [sortOrder, setSortOrder] = useState(0);
   const [savedFlash, setSavedFlash] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
@@ -526,6 +587,14 @@ function PortfolioSection({
     setVideoUrl("");
     setLink("");
     setGalleryCaption("");
+    setSlug("");
+    setTechStack("");
+    setLiveUrl("");
+    setProblem("");
+    setSolution("");
+    setArchitecture("");
+    setFeatured(false);
+    setSortOrder(0);
   }
 
   function openEdit(item: PortfolioItem) {
@@ -537,6 +606,14 @@ function PortfolioSection({
     setVideoUrl(item.videoUrl ?? "");
     setLink(item.link ?? "");
     setGalleryCaption(item.galleryCaption ?? "");
+    setSlug(item.slug ?? "");
+    setTechStack(item.techStack ?? "");
+    setLiveUrl(item.liveUrl ?? "");
+    setProblem(item.problem ?? "");
+    setSolution(item.solution ?? "");
+    setArchitecture(item.architecture ?? "");
+    setFeatured(item.featured);
+    setSortOrder(item.sortOrder);
   }
 
   async function save(e: React.FormEvent) {
@@ -544,6 +621,16 @@ function PortfolioSection({
     onError(null);
     try {
       let savedItem: PortfolioItem;
+      const detailPayload = {
+        slug: slug.trim() || null,
+        techStack: techStack.trim() || null,
+        liveUrl: liveUrl.trim() || null,
+        problem: problem.trim() || null,
+        solution: solution.trim() || null,
+        architecture: architecture.trim() || null,
+        featured,
+        sortOrder,
+      };
       if (editing === "new") {
         savedItem = await api<PortfolioItem>("/api/admin/portfolio", {
           method: "POST",
@@ -555,6 +642,7 @@ function PortfolioSection({
             link: link.trim() || null,
             galleryCaption: galleryCaption.trim() || null,
             videoUrl: videoUrl.trim() || null,
+            ...detailPayload,
           }),
         });
         // Auto-switch to edit mode so admin can add extra gallery images
@@ -572,6 +660,7 @@ function PortfolioSection({
             link: link.trim() || null,
             galleryCaption: galleryCaption.trim() || null,
             videoUrl: videoUrl.trim() || null,
+            ...detailPayload,
           }),
         });
         setEditing(savedItem);
@@ -739,6 +828,78 @@ function PortfolioSection({
                 onChange={(e) => setGalleryCaption(e.target.value)}
               />
             </label>
+
+            {/* Detail-page fields (/projects/[slug]) */}
+            <div className="space-y-3 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-white/50">
+                Detail page (/projects/[slug])
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input
+                  className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+                  placeholder="slug (e.g. apncodix) — empty = no public page"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value.toLowerCase())}
+                />
+                <input
+                  className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+                  placeholder="Live URL (https://…)"
+                  value={liveUrl}
+                  onChange={(e) => setLiveUrl(e.target.value)}
+                />
+              </div>
+              <input
+                className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm"
+                placeholder="Tech stack (comma-separated, e.g. Go, Prometheus, Grafana)"
+                value={techStack}
+                onChange={(e) => setTechStack(e.target.value)}
+              />
+              <textarea
+                className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white"
+                placeholder="Problem — what problem does this solve?"
+                rows={2}
+                maxLength={8000}
+                value={problem}
+                onChange={(e) => setProblem(e.target.value)}
+              />
+              <textarea
+                className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white"
+                placeholder="Solution — how does it solve it?"
+                rows={2}
+                maxLength={8000}
+                value={solution}
+                onChange={(e) => setSolution(e.target.value)}
+              />
+              <textarea
+                className="w-full rounded-lg border border-white/20 bg-black/40 px-3 py-2 text-sm text-white"
+                placeholder="Architecture — how is it built?"
+                rows={2}
+                maxLength={8000}
+                value={architecture}
+                onChange={(e) => setArchitecture(e.target.value)}
+              />
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-xs text-white/70">
+                  <input
+                    type="checkbox"
+                    checked={featured}
+                    onChange={(e) => setFeatured(e.target.checked)}
+                    className="accent-emerald-400"
+                  />
+                  Featured (larger card on Works)
+                </label>
+                <label className="flex items-center gap-2 text-xs text-white/70">
+                  Sort order
+                  <input
+                    type="number"
+                    min={0}
+                    className="w-20 rounded-lg border border-white/20 bg-black/40 px-2 py-1 text-sm text-white"
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(Number(e.target.value))}
+                  />
+                </label>
+              </div>
+            </div>
             <div className="flex gap-2">
               <button type="submit" className="rounded-full bg-white px-4 py-2 text-sm text-black">
                 Save

@@ -43,6 +43,7 @@ export async function PUT(request: Request) {
       resumeUrl,
       favicon,
       ogImage,
+      chatEnabled: data.chatEnabled,
     };
 
     if (!about) {

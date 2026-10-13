@@ -1,13 +1,58 @@
 import { prisma } from "@/lib/prisma";
 import { siteConfig } from "@/lib/site-config";
+import { clientIp, isSameOrigin, rateLimit } from "@/lib/security";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.XAI_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
+/**
+ * Provider-independent AI chat. Works with any OpenAI-compatible API
+ * (Groq, OpenAI, xAI, OpenRouter, Ollama, Together, …) via env config:
+ *
+ *   AI_API_KEY   — secret key for the provider (falls back to
+ *                  XAI_API_KEY / GROQ_API_KEY / OPENAI_API_KEY)
+ *   AI_BASE_URL  — OpenAI-compatible base URL
+ *                  (default: https://api.groq.com/openai/v1)
+ *   AI_MODEL     — model id (default: llama-3.3-70b-versatile)
+ *
+ * The widget itself can be switched on/off from the admin panel
+ * (About → chatEnabled). Default: off.
+ */
+let cachedClient: OpenAI | null = null;
+let cachedConfig: { apiKey: string; baseURL: string; model: string } | null = null;
+function getOpenAIClient(): OpenAI | null {
+  const apiKey =
+    process.env.AI_API_KEY?.trim() ||
+    process.env.XAI_API_KEY?.trim() ||
+    process.env.GROQ_API_KEY?.trim() ||
+    process.env.OPENAI_API_KEY?.trim() ||
+    "";
+  if (!apiKey) return null;
+  const baseURL =
+    process.env.AI_BASE_URL?.trim() ||
+    process.env.XAI_BASE_URL?.trim() ||
+    process.env.GROQ_BASE_URL?.trim() ||
+    "https://api.groq.com/openai/v1";
+  const model =
+    process.env.AI_MODEL?.trim() ||
+    process.env.GROK_MODEL?.trim() ||
+    "llama-3.3-70b-versatile";
+  if (
+    !cachedClient ||
+    cachedConfig?.apiKey !== apiKey ||
+    cachedConfig?.baseURL !== baseURL
+  ) {
+    cachedClient = new OpenAI({ apiKey, baseURL });
+    cachedConfig = { apiKey, baseURL, model };
+  }
+  return cachedClient;
+}
 
-const GROK_MODEL = process.env.GROK_MODEL ?? "llama-3.3-70b-versatile";
+function getChatModel(): string {
+  return (
+    process.env.AI_MODEL?.trim() ||
+    process.env.GROK_MODEL?.trim() ||
+    "llama-3.3-70b-versatile"
+  );
+}
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -113,11 +158,30 @@ const submitContactTool: OpenAI.Chat.Completions.ChatCompletionTool = {
 
 export async function POST(request: Request) {
   try {
+    // Security guards: same-origin, body size, IP rate limit (10 / 5 min)
+    if (!isSameOrigin(request)) {
+      return Response.json({ error: "Forbidden." }, { status: 403 });
+    }
+    if (request.headers.get("content-length") && Number(request.headers.get("content-length")) > 64 * 1024) {
+      return Response.json({ error: "Payload too large." }, { status: 413 });
+    }
+    const ip = clientIp(request);
+    if (!rateLimit(`chat:${ip}`, 10, 5 * 60 * 1000)) {
+      return Response.json(
+        { error: "Too many requests — please wait a few minutes." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const messages: ChatMessage[] = Array.isArray(body.messages) ? body.messages : [];
 
     if (messages.length === 0) {
       return Response.json({ error: "No messages provided." }, { status: 400 });
+    }
+    // Hard cap conversation length sent to the provider
+    if (messages.length > 30) {
+      return Response.json({ error: "Conversation too long." }, { status: 400 });
     }
 
     // Fetch portfolio data in parallel
@@ -135,11 +199,32 @@ export async function POST(request: Request) {
       prisma.social.findFirst().catch(() => null),
     ]);
 
+    // Admin kill switch — the widget is hidden client-side too, but the
+    // API must refuse on its own (defense in depth).
+    if (!about?.chatEnabled) {
+      return Response.json(
+        { error: "AI chat is currently disabled." },
+        { status: 503 }
+      );
+    }
+
     const systemContent = buildSystemPrompt(about, portfolio, skillCategories, social);
     const allMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: systemContent },
       ...messages.map((m) => ({ role: m.role, content: m.content })),
     ];
+
+    const openai = getOpenAIClient();
+    if (!openai) {
+      return Response.json(
+        {
+          error:
+            "Chat is unavailable — no AI provider key configured. Set AI_API_KEY (and optionally AI_BASE_URL / AI_MODEL).",
+        },
+        { status: 503 }
+      );
+    }
+    const CHAT_MODEL = getChatModel();
 
     const encoder = new TextEncoder();
 
@@ -154,7 +239,7 @@ export async function POST(request: Request) {
         try {
           // Streaming completion with tool support
           const completion = await openai.chat.completions.create({
-            model: GROK_MODEL,
+            model: CHAT_MODEL,
             messages: allMessages,
             tools: [submitContactTool],
             tool_choice: "auto",
@@ -217,7 +302,7 @@ export async function POST(request: Request) {
 
             // Second streaming pass with tool result
             const followUp = await openai.chat.completions.create({
-              model: GROK_MODEL,
+              model: CHAT_MODEL,
               messages: [
                 ...allMessages,
                 {

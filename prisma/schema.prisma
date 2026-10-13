@@ -18,14 +18,45 @@ model Portfolio {
   id             String           @id @default(uuid())
   title          String
   description    String           @db.Text
+  /// URL segment for /projects/[slug] detail page; empty = no public detail page.
+  slug           String?          @unique
+  /// Comma-separated technologies shown as pills (e.g. "Go, Prometheus, Grafana").
+  techStack      String?          @db.Text
   image          String?
   link           String?
+  /// Live deployment URL shown as "Visit site"; falls back to `link` in UI.
+  liveUrl        String?          @db.Text
   /// Short line on the Gallery (visual snapshots) image; optional.
   galleryCaption String?          @db.Text
   /// Looping muted video on Works + Gallery (MP4/WebM URL or /uploads/…); optional.
   videoUrl       String?          @db.Text
+  /// Detail page sections — all optional, rendered only when present.
+  problem        String?          @db.Text
+  solution       String?          @db.Text
+  architecture   String?          @db.Text
+  /// Featured projects render larger on Works.
+  featured        Boolean         @default(false)
+  /// Lower renders first on Works.
+  sortOrder      Int              @default(0)
   createdAt      DateTime         @default(now())
   images         PortfolioImage[]
+}
+
+/// Timeline entries — only verifiable milestones (projects shipped, credentials earned, OSS merged).
+model Experience {
+  id           String   @id @default(uuid())
+  /// Free-form label, e.g. "2026-04" or "April 2026".
+  year         String
+  title        String
+  org          String?
+  /// work | project | certification | opensource | milestone
+  type         String   @default("project")
+  description  String   @db.Text
+  /// Comma-separated technologies.
+  technologies String?  @db.Text
+  url          String?  @db.Text
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
 }
 
 /// Extra gallery images attached to a portfolio project.
@@ -55,6 +86,8 @@ model About {
   favicon        String? @db.Text
   /// Open Graph / social-share preview image shown when site is shared or searched (1200×630 recommended).
   ogImage        String? @db.Text
+  /// Master switch for the public AI chat widget (bottom-right). Default: off.
+  chatEnabled    Boolean @default(false)
 }
 
 /// Grouped technical skills (e.g. Programming Languages, Backend Engineering).
@@ -91,6 +124,24 @@ model Contact {
   role      String
   message   String   @db.Text
   createdAt DateTime @default(now())
+}
+
+/// Security/audit trail: login events + admin mutations.
+model AuditLog {
+  id        String   @id @default(uuid())
+  /// "admin" | "anonymous"
+  actor     String
+  action    String
+  /// e.g. "portfolio", "experience", "auth"
+  entity    String
+  entityId  String?
+  /// Short human-readable detail (no secrets).
+  detail    String?  @db.Text
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity])
 }
 
 /// Certificate / credential earned by the portfolio owner.
