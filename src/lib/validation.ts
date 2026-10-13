@@ -28,14 +28,38 @@ export const contactSchema = z.object({
   message: z.string().min(1, "Message is required").max(5000),
 });
 
-export const portfolioCreateSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200),
-  description: z.string().min(1, "Description is required").max(10000),
-  image: optionalUrlOrPath,
-  link: optionalUrlOrPath,
-  galleryCaption: z.string().max(500).optional().nullable(),
-  videoUrl: optionalUrlOrPath,
+const slugField = z
+  .string()
+  .max(120)
+  .optional()
+  .nullable()
+  .refine(
+    (val) => val === undefined || val === null || val === "" || /^[a-z0-9]+(-[a-z0-9]+)*$/.test(val),
+    "Slug may only contain lowercase letters, numbers and hyphens"
+  );
+
+/** Extended fields for /projects/[slug] detail pages. */
+export const portfolioDetailFieldsSchema = z.object({
+  slug: slugField,
+  techStack: z.string().max(2000).optional().nullable(),
+  liveUrl: optionalUrlOrPath,
+  problem: z.string().max(8000).optional().nullable(),
+  solution: z.string().max(8000).optional().nullable(),
+  architecture: z.string().max(8000).optional().nullable(),
+  featured: z.boolean().optional(),
+  sortOrder: z.number().int().min(0).max(9999).optional(),
 });
+
+export const portfolioCreateSchema = z
+  .object({
+    title: z.string().min(1, "Title is required").max(200),
+    description: z.string().min(1, "Description is required").max(10000),
+    image: optionalUrlOrPath,
+    link: optionalUrlOrPath,
+    galleryCaption: z.string().max(500).optional().nullable(),
+    videoUrl: optionalUrlOrPath,
+  })
+  .merge(portfolioDetailFieldsSchema);
 
 export const portfolioItemUpdateSchema = portfolioCreateSchema.extend({
   id: z.string().uuid(),
@@ -68,6 +92,7 @@ export const aboutUpdateSchema = z.object({
   resumeUrl: optionalUrlOrPath,
   favicon: optionalUrlOrPath,
   ogImage: optionalUrlOrPath,
+  chatEnabled: z.boolean().optional(),
 });
 
 export const socialUpdateSchema = z.object({

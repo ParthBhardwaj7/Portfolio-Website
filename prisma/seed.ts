@@ -12,184 +12,376 @@ config({ path: resolve(process.cwd(), ".env.local"), override: true });
 
 const prisma = new PrismaClient();
 
-/** Set SEED_DUMMY=0 to skip demo portfolio / contacts on empty DB */
-const SEED_DUMMY = process.env.SEED_DUMMY !== "0";
+/**
+ * Real content snapshot — synced 2026-10-03 from the production portfolio
+ * (parthbhardwaj.com public APIs) and verified GitHub data
+ * (github.com/ParthBhardwaj7). Nothing below is invented; edit in Admin.
+ */
 
-const DEFAULT_SKILL_TREE: { title: string; items: string[] }[] = [
+const REAL_ABOUT = {
+  content:
+    "Backend & AI Engineer focused on building scalable backend systems and intelligent, data-driven applications using Go (Golang), Node.js, and Python. Experienced in designing REST APIs and microservices architectures, with hands-on exposure to Docker, CI/CD pipelines, and cloud-based deployments.\n\nSkilled in developing database-driven systems using PostgreSQL and MongoDB, with a strong focus on performance, system design, and maintainability. Interested in integrating AI and automation into backend services to build efficient, production-ready systems.",
+  profileImage:
+    "https://res.cloudinary.com/dof7reunt/image/upload/v1775911145/ml_default/r5xiaxhudb0skbsobvng.png",
+  heroTagline: "Hello, I'm Parth Bhardwaj ⚡",
+  contactCaption: "Contact me at parthbhardwaj2579@gmail.com",
+  resumeUrl:
+    "https://res.cloudinary.com/dof7reunt/raw/upload/v1777883022/ml_default/vuqflwvivdylihglbpg2",
+};
+
+const REAL_SOCIAL = {
+  github: "https://github.com/ParthBhardwaj7",
+  linkedin: "https://www.linkedin.com/in/parthbhardwaj7/",
+  instagram: "https://www.instagram.com/parthbhardwaj93/",
+  twitter: "https://x.com/Parthbhardwaj95",
+};
+
+const REAL_SKILL_TREE: { title: string; items: string[] }[] = [
   {
-    title: "Programming Languages",
-    items: ["Go (Golang)", "Python"],
+    title: "Cloud & DevOps",
+    items: ["Docker", "Kubernetes", "AWS", "GitHub Actions", "Terraform"],
   },
   {
-    title: "Backend Engineering",
-    items: [
-      "RESTful APIs",
-      "Microservices Architecture",
-      "API Authentication (JWT)",
-      "Middleware",
-      "CRUD Operations",
-      "Database Schema Design",
-      "Error Handling & Logging",
-    ],
+    title: "Programming Languages",
+    items: ["Go", "Python", "React"],
   },
   {
     title: "Databases",
     items: ["PostgreSQL", "MongoDB"],
   },
   {
-    title: "Cloud & DevOps",
-    items: ["AWS (EC2, S3)", "Docker", "Kubernetes", "Terraform", "CI/CD (GitHub Actions)"],
-  },
-  {
     title: "Automation",
-    items: ["n8n Workflow Automation"],
+    items: ["n8n", "OpenClaw"],
   },
   {
     title: "Developer Tools",
-    items: ["Git", "GitHub", "Linux (CLI)", "Postman"],
+    items: ["Git", "GitHub", "Postman", "Linux / Ubuntu CLI"],
   },
   {
-    title: "Core Concepts",
-    items: ["Data Structures & Algorithms", "System Design", "Distributed Systems Fundamentals"],
+    title: "AI & Emerging Tech",
+    items: ["MCP (Model Context Protocol)", "LLM Integration", "AI Orchestration"],
   },
 ];
 
-/** Demo portfolio — images from picsum (requires picsum in next.config remotePatterns). */
-const DUMMY_PORTFOLIO: {
+const REAL_PORTFOLIO: {
   title: string;
+  slug: string;
   description: string;
+  techStack: string;
   image: string;
   link: string | null;
-  galleryCaption?: string | null;
-  videoUrl?: string | null;
+  liveUrl: string | null;
+  problem: string;
+  solution: string;
+  architecture: string;
+  featured: boolean;
+  sortOrder: number;
+  images: { url: string; caption?: string }[];
 }[] = [
   {
-    title: "API Gateway & Auth Service",
+    title: "APNCODIX",
+    slug: "apncodix",
     description:
-      "Dummy project: JWT-based auth, rate limiting, and OpenAPI docs. Replace this text in admin — this seed data is only for local UI testing.",
-    image: "https://picsum.photos/seed/gateway/1200/750",
-    link: "https://github.com",
-    galleryCaption: "JWT · rate limits · OpenAPI",
+      "Full-Stack Production Platform — a complete web platform built from scratch with a focus on performance, scalability, and real-world production practices. Secured with JWT authentication, validation, and rate limiting, deployed on a VPS with Docker + Nginx and automated through CI/CD.",
+    techStack:
+      "Next.js 14, React, TypeScript, Tailwind CSS, Radix UI, NestJS, PostgreSQL, Prisma, Docker, Nginx, GitHub Actions, Cloudinary, Razorpay",
+    image:
+      "https://res.cloudinary.com/dof7reunt/image/upload/v1775921012/ml_default/mwpfxmhzzurk809ck9r7.png",
+    link: "https://apncodix.com/",
+    liveUrl: "https://apncodix.com/",
+    problem:
+      "A production platform needs more than a working demo: real users mean real payments, media uploads, and traffic — so security (auth, validation, rate limiting), HTTPS, and repeatable deployments have to be designed in from day one.",
+    solution:
+      "A full-stack platform split into a Next.js 14 + TypeScript frontend and a NestJS backend on PostgreSQL (Prisma), with JWT-based authentication, request validation, and rate limiting protecting every route. Media runs through Cloudinary and payments through Razorpay. Performance and SEO were tuned until the site scored 100 on Google PageSpeed Insights.",
+    architecture:
+      "Next.js 14 / React / TypeScript frontend with Tailwind + Radix UI → NestJS REST API with JWT auth, validation and rate limiting → PostgreSQL via Prisma → Dockerized services behind Nginx with Let's Encrypt HTTPS on a VPS → GitHub Actions CI/CD for automated deployments; Cloudinary for media, Razorpay for payments.",
+    featured: true,
+    sortOrder: 0,
+    images: [
+      {
+        url: "https://res.cloudinary.com/dof7reunt/image/upload/v1775922490/ml_default/wmthy20eb6ut1zsmwryo.png",
+      },
+      {
+        url: "https://res.cloudinary.com/dof7reunt/image/upload/v1775922515/ml_default/lq3zk8q8bdevrhkhasr2.png",
+      },
+    ],
   },
   {
-    title: "Realtime Events Pipeline",
+    title: "AI-PM",
+    slug: "ai-pm",
     description:
-      "Dummy: WebSocket fan-out, Redis streams, and idempotent workers. Use admin to add your real projects later.",
-    image: "https://picsum.photos/seed/pipeline/1200/750",
-    link: "https://github.com",
-    galleryCaption: "WebSockets · Redis streams",
+      "AI-powered product ideation tool that transforms raw ideas into structured, actionable insights. Built with MCP (Tambo) to generate reusable, scalable Next.js UI components, and Groq-powered LLM integration for product breakdowns, use cases, and feature suggestions.",
+    techStack: "Next.js, MCP (Model Context Protocol), Tambo, Groq, LLM Integration, TypeScript",
+    image:
+      "https://res.cloudinary.com/dof7reunt/image/upload/v1775923864/ml_default/srvlzlgfttfhwc2vhhvq.png",
+    link: "https://ai-pm-one.vercel.app/",
+    liveUrl: "https://ai-pm-one.vercel.app/",
+    problem:
+      "Early product thinking is unstructured: raw ideas stay vague, and turning them into breakdowns, use cases, and feature suggestions is slow manual work.",
+    solution:
+      "An AI ideation tool that processes user input through an LLM (Groq) to produce structured product breakdowns, use cases, and feature suggestions. The frontend itself is generated through MCP (Tambo), producing reusable and scalable Next.js UI components and cutting manual frontend effort.",
+    architecture:
+      "Next.js UI (generated via MCP/Tambo component automation) → user input captured client-side → Groq-hosted LLM processes prompts into structured insights → results rendered as component-driven views. Deployed on Vercel.",
+    featured: false,
+    sortOrder: 1,
+    images: [
+      {
+        url: "https://res.cloudinary.com/dof7reunt/image/upload/v1775924072/ml_default/fihfxx32rqsjjzmmjdr5.png",
+      },
+      {
+        url: "https://res.cloudinary.com/dof7reunt/image/upload/v1775924083/ml_default/m2k7z3taorzo7d0kagdn.png",
+      },
+    ],
   },
   {
-    title: "Data Sync & ETL",
+    title: "Infrastructure Monitoring Stack",
+    slug: "infrastructure-monitoring-stack",
     description:
-      "Dummy: Scheduled jobs, Prisma + Postgres, dead-letter queue for failures. Portfolio card layout + gallery test.",
-    image: "https://picsum.photos/seed/etl/1200/750",
-    link: null,
-    galleryCaption: null,
-  },
-  {
-    title: "Admin Dashboard",
-    description:
-      "Dummy: CRUD UI, role checks, and audit logs — demonstrates two-column works grid on desktop.",
-    image: "https://picsum.photos/seed/admin/1200/750",
-    link: "https://example.com",
-    galleryCaption: "CRUD · audit trail",
+      "Dockerized observability stack using Prometheus and Grafana to monitor a Go application via its /metrics endpoint — with scrape jobs, dashboards for request rates and error counts, and alert rules for incident detection, all deployed via Docker Compose.",
+    techStack: "Go, Prometheus, Grafana, Docker Compose, Observability",
+    image:
+      "https://res.cloudinary.com/dof7reunt/image/upload/v1777119261/ml_default/dbsumrwigtf9aah68ute.png",
+    link: "https://github.com/ParthBhardwaj7/GO-Lang/tree/main/webserver",
+    liveUrl: null,
+    problem:
+      "A Go service exposes rich runtime metrics at /metrics, but without scraping, visualization, and alerting, those signals can't detect incidents — request-rate spikes and error surges would go unnoticed.",
+    solution:
+      "A reproducible, production-like monitoring environment: Prometheus scrape jobs collect the Go app's metrics, Grafana dashboards visualize request rates and error counts, and alert rules fire on incident conditions. Everything ships as one Docker Compose setup.",
+    architecture:
+      "Go application exposing /metrics → Prometheus scrape jobs (time-series collection) → Grafana dashboards (request rates, error counts) → Alertmanager-style alert rules for incident detection → entire stack defined and deployed via Docker Compose.",
+    featured: false,
+    sortOrder: 2,
+    images: [
+      {
+        url: "https://res.cloudinary.com/dof7reunt/image/upload/v1777119342/ml_default/p4bmpic0zewoqkej8yep.png",
+      },
+      {
+        url: "https://res.cloudinary.com/dof7reunt/image/upload/v1777119358/ml_default/kdnorr4dprlijvsh4rgh.png",
+      },
+    ],
   },
 ];
 
-const DUMMY_CONTACTS = [
+/**
+ * Verified milestones only — dates come from GitHub repo creation dates
+ * (api.github.com/users/ParthBhardwaj7), certification issue dates, and the
+ * merged pull request record. Update in Admin → Experience.
+ */
+const REAL_EXPERIENCE: {
+  year: string;
+  title: string;
+  org?: string;
+  type: string;
+  description: string;
+  technologies?: string;
+  url?: string;
+  sortOrder: number;
+}[] = [
   {
-    name: "Alex Rivera",
-    email: "alex.dummy@example.com",
-    role: "I have a project",
-    message:
-      "Hi — this is a dummy contact row for testing the admin inbox. You can delete it from Admin → Contacts.",
+    year: "2023",
+    title: "Started building in public",
+    org: "github.com/ParthBhardwaj7",
+    type: "milestone",
+    description:
+      "Joined GitHub (July 2023) and began shipping learning projects — Python, ML experiments, and cloud fundamentals.",
+    sortOrder: 0,
   },
   {
-    name: "Sam Chen",
-    email: "recruiter.dummy@example.com",
-    role: "I am a recruiter",
-    message:
-      "Sample recruiter message. Checking that the contacts table and list view work end-to-end.",
+    year: "2025",
+    title: "Cloud & DevOps foundations",
+    org: "Independent study",
+    type: "milestone",
+    description:
+      "Deep-dived the deployment stack: AWS projects (Jan), Docker labs (Mar), and daily Terraform practice (Apr) — documented openly in dedicated repositories.",
+    technologies: "AWS, Docker, Terraform",
+    sortOrder: 1,
+  },
+  {
+    year: "2025",
+    title: "Full-stack & AI projects",
+    org: "Independent projects",
+    type: "project",
+    description:
+      "Shipped agentivesite (TypeScript), an end-to-end book recommendation system, and laptop price prediction (ML) — moving from notebooks to deployed applications.",
+    technologies: "TypeScript, Python, ML",
+    sortOrder: 2,
+  },
+  {
+    year: "2026 · Feb",
+    title: "AI-PM — LLM product ideation tool",
+    org: "Independent project",
+    type: "project",
+    description:
+      "Built and deployed an AI-powered ideation tool: MCP (Tambo) for UI component generation and Groq LLM integration for structured product insights.",
+    technologies: "Next.js, MCP, Groq, LLM",
+    url: "https://ai-pm-one.vercel.app/",
+    sortOrder: 3,
+  },
+  {
+    year: "2026 · Apr",
+    title: "AWS Academy Cloud Architecting + Cloud Practitioner Essentials",
+    org: "AWS Academy / AWS Skill Builder",
+    type: "certification",
+    description:
+      "Earned both AWS credentials within two days: Cloud Practitioner Essentials (23 April) and Cloud Architecting (24 April) — VPC design, compute, storage, HA, and well-architected practices.",
+    technologies: "AWS, VPC, EC2, RDS",
+    url: "https://www.credly.com/go/PVrHemgC",
+    sortOrder: 4,
+  },
+  {
+    year: "2026 · May",
+    title: "Systems season: Go, shorteners, and agent marketplaces",
+    org: "Independent projects",
+    type: "project",
+    description:
+      "Shipped URL-Shortener-Analytics-Platform (Go, built through every deployment phase), FOCUSFLOW (Flutter execution engine), and DashPin — a marketplace for AI agents.",
+    technologies: "Go, TypeScript, Flutter",
+    url: "https://github.com/ParthBhardwaj7/URL-Shortener-Analytics-Platform",
+    sortOrder: 5,
+  },
+  {
+    year: "2026 · Jul",
+    title: "AI-Memory-OS",
+    org: "Independent project",
+    type: "project",
+    description:
+      "Built a persistent memory system for AI — 'your second brain that doesn't forget' — implemented in Python.",
+    technologies: "Python, AI Memory",
+    url: "https://github.com/ParthBhardwaj7/AI-Memory-OS",
+    sortOrder: 6,
+  },
+  {
+    year: "2026 · Aug",
+    title: "First merged open-source contribution",
+    org: "topoteretes/cognee",
+    type: "opensource",
+    description:
+      "PR #3274 'fix(serve): attempt health check with cached creds before refresh' was merged into cognee, the open-source AI memory platform. A follow-up feature PR (#3458, LangChain + LlamaIndex memory sources) is under review.",
+    technologies: "Python, Open Source",
+    url: "https://github.com/topoteretes/cognee/pull/3274",
+    sortOrder: 7,
+  },
+  {
+    year: "2026 · Sep",
+    title: "AI infrastructure research",
+    org: "Forks & study",
+    type: "milestone",
+    description:
+      "Actively working inside the ecosystems of MLflow, KServe, Kubernetes, etcd, and Prometheus — forking, reading, and preparing upstream contributions.",
+    technologies: "MLflow, KServe, Kubernetes, etcd, Prometheus",
+    sortOrder: 8,
   },
 ];
 
-async function seedSkillTree() {
+const REAL_CERTIFICATIONS = [
+  {
+    title: "AWS Academy Cloud Architecting",
+    issuer: "AWS Academy",
+    issueDate: "24-04-2026",
+    imageUrl:
+      "https://res.cloudinary.com/dof7reunt/image/upload/v1777029669/ml_default/uijgtew4qdyiyyaaqlqg.png",
+    pdfUrl: null as string | null,
+    credentialUrl: "https://www.credly.com/go/PVrHemgC",
+    sortOrder: 0,
+  },
+  {
+    title: "AWS Cloud Practitioner Essentials",
+    issuer: "AWS Skill Builder",
+    issueDate: "23 April 2026",
+    imageUrl:
+      "https://res.cloudinary.com/dof7reunt/image/upload/v1777029945/ml_default/xt6mhqzwbilthh8ifew3.png",
+    pdfUrl: null as string | null,
+    credentialUrl: null as string | null,
+    sortOrder: 1,
+  },
+];
+
+async function seedAbout() {
+  const existing = await prisma.about.findFirst();
+  if (existing) {
+    // Keep admin-editable fields if already set; fill gaps only.
+    await prisma.about.update({
+      where: { id: existing.id },
+      data: {
+        content: existing.content?.trim() || REAL_ABOUT.content,
+        profileImage: existing.profileImage ?? REAL_ABOUT.profileImage,
+        heroTagline: existing.heroTagline?.trim() || REAL_ABOUT.heroTagline,
+        contactCaption: existing.contactCaption?.trim() || REAL_ABOUT.contactCaption,
+        resumeUrl: existing.resumeUrl ?? REAL_ABOUT.resumeUrl,
+      },
+    });
+  } else {
+    await prisma.about.create({ data: REAL_ABOUT });
+  }
+}
+
+async function seedSocial() {
+  const social = await prisma.social.findFirst();
+  if (!social) {
+    await prisma.social.create({ data: REAL_SOCIAL });
+    return;
+  }
+  if (!social.github && !social.linkedin) {
+    await prisma.social.update({ where: { id: social.id }, data: REAL_SOCIAL });
+  }
+}
+
+async function seedSkills() {
   const count = await prisma.skillCategory.count();
   if (count > 0) return;
-
   let order = 0;
-  for (const block of DEFAULT_SKILL_TREE) {
+  for (const block of REAL_SKILL_TREE) {
     await prisma.skillCategory.create({
       data: {
         title: block.title,
         sortOrder: order,
-        items: {
-          create: block.items.map((label, i) => ({
-            label,
+        items: { create: block.items.map((label, i) => ({ label, sortOrder: i })) },
+      },
+    });
+    order += 1;
+  }
+  console.log(`Seeded ${REAL_SKILL_TREE.length} real skill categories.`);
+}
+
+async function seedPortfolio() {
+  const n = await prisma.portfolio.count();
+  if (n > 0) {
+    console.log("Portfolio not empty — leaving rows untouched (edit in Admin).");
+    return;
+  }
+  for (const p of REAL_PORTFOLIO) {
+    await prisma.portfolio.create({
+      data: {
+        ...p,
+        images: {
+          create: p.images.map((img, i) => ({
+            url: img.url,
+            caption: img.caption ?? null,
             sortOrder: i,
           })),
         },
       },
     });
-    order += 1;
   }
-  console.log(`Seeded ${DEFAULT_SKILL_TREE.length} skill categories.`);
+  console.log(`Seeded ${REAL_PORTFOLIO.length} real portfolio projects.`);
 }
 
-async function seedDummyPortfolio() {
-  if (!SEED_DUMMY) return;
-  const n = await prisma.portfolio.count();
-  if (n > 0) {
-    console.log("Skipping dummy portfolio (table already has rows).");
-    return;
+async function seedExperience() {
+  const n = await prisma.experience.count();
+  if (n > 0) return;
+  for (const e of REAL_EXPERIENCE) {
+    await prisma.experience.create({ data: e });
   }
-  for (const row of DUMMY_PORTFOLIO) {
-    await prisma.portfolio.create({
-      data: {
-        title: row.title,
-        description: row.description,
-        image: row.image,
-        link: row.link,
-        galleryCaption: row.galleryCaption ?? null,
-        videoUrl: row.videoUrl ?? null,
-      },
-    });
-  }
-  console.log(`Seeded ${DUMMY_PORTFOLIO.length} dummy portfolio items (picsum images).`);
+  console.log(`Seeded ${REAL_EXPERIENCE.length} verified timeline entries.`);
 }
 
-async function seedDummyContacts() {
-  if (!SEED_DUMMY) return;
-  const n = await prisma.contact.count();
-  if (n > 0) {
-    console.log("Skipping dummy contacts (table already has rows).");
-    return;
+async function seedCertifications() {
+  const n = await prisma.certification.count();
+  if (n > 0) return;
+  for (const c of REAL_CERTIFICATIONS) {
+    await prisma.certification.create({ data: c });
   }
-  for (const row of DUMMY_CONTACTS) {
-    await prisma.contact.create({ data: row });
-  }
-  console.log(`Seeded ${DUMMY_CONTACTS.length} dummy contact messages.`);
-}
-
-async function seedDummySocialLinks() {
-  if (!SEED_DUMMY) return;
-  const social = await prisma.social.findFirst();
-  if (!social) return;
-  if (social.github || social.linkedin) {
-    console.log("Skipping dummy social links (already set).");
-    return;
-  }
-  await prisma.social.update({
-    where: { id: social.id },
-    data: {
-      github: "https://github.com/octocat",
-      linkedin: "https://www.linkedin.com",
-      instagram: "https://www.instagram.com",
-      twitter: "https://twitter.com",
-    },
-  });
-  console.log("Filled dummy social URLs (edit in Admin → Social).");
+  console.log(`Seeded ${REAL_CERTIFICATIONS.length} real certifications.`);
 }
 
 async function main() {
@@ -199,49 +391,19 @@ async function main() {
   await prisma.admin.upsert({
     where: { username: ADMIN_USER },
     update: { password: passwordHash },
-    create: {
-      username: ADMIN_USER,
-      password: passwordHash,
-    },
+    create: { username: ADMIN_USER, password: passwordHash },
   });
 
-  const defaultHero =
-    "For any queries contact me at parthbhardwaj2579@gmail.com";
-  const aboutCount = await prisma.about.count();
-  if (aboutCount === 0) {
-    await prisma.about.create({
-      data: {
-        content:
-          "I build reliable APIs, data pipelines, and backend systems. Focused on performance, security, and maintainability. (Tip: this paragraph is editable in Admin → About — the line below is dummy seed text for layout testing.)",
-        heroTagline: defaultHero,
-        contactCaption: defaultHero,
-      },
-    });
-  }
+  await seedAbout();
+  await seedSocial();
+  await seedSkills();
+  await seedPortfolio();
+  await seedExperience();
+  await seedCertifications();
 
-  const socialCount = await prisma.social.count();
-  if (socialCount === 0) {
-    await prisma.social.create({
-      data: {},
-    });
-  }
-
-  await seedSkillTree();
-  await seedDummySocialLinks();
-  await seedDummyPortfolio();
-  await seedDummyContacts();
-
-  console.log("Seed complete.");
+  console.log("Seed complete (real content snapshot).");
   console.log(`Admin username: ${ADMIN_USER}`);
   console.log(`Admin password: ${describePasswordForLogs(ADMIN_PASS)}`);
-  if (process.env.NODE_ENV !== "production") {
-    console.log("Change credentials via .env (ADMIN_*) and re-run seed or admin:create for production.");
-  }
-  if (SEED_DUMMY) {
-    console.log(
-      "Dummy data: portfolio + contacts only when those tables were empty. Set SEED_DUMMY=0 to skip next time."
-    );
-  }
 }
 
 main()

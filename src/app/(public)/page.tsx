@@ -1,108 +1,218 @@
-import { ContactSection } from "@/components/contact-section";
-import { GalleryMasonry } from "@/components/gallery-masonry";
-import { HomeHero } from "@/components/home-hero";
-import { WorksScrollShowcase } from "@/components/works-scroll-showcase";
-import { ScrollSection } from "@/components/scroll-section";
-import { SectionHeading } from "@/components/section-heading";
-import { SiteFooter } from "@/components/site-footer";
-import { TechnicalSkillsSection } from "@/components/technical-skills-section";
-import { CertificationsSection } from "@/components/certifications-section";
+import { Hero } from "@/components/lab/hero";
+import { AboutSection } from "@/components/lab/about-section";
+import { EngineeringPhilosophy } from "@/components/lab/engineering-philosophy";
+import { ProjectsSection } from "@/components/lab/projects-section";
+import { OpenSourceStrip } from "@/components/lab/opensource-strip";
+import { SkillsMarquee } from "@/components/lab/skills-marquee";
+import { TechStack } from "@/components/lab/tech-stack";
+import { ExperienceSection } from "@/components/lab/experience-section";
+import { CertificationsSection } from "@/components/lab/certifications-section";
+import { GallerySection } from "@/components/lab/gallery-section";
+import { ResumeSection } from "@/components/lab/resume-section";
+import { ContactSection } from "@/components/lab/contact-section";
 import {
   getPublicAbout,
   getPublicCertifications,
+  getPublicExperience,
   getPublicPortfolio,
   getPublicSkillCategories,
+  getPublicSocial,
 } from "@/lib/public-data";
-import { DEFAULT_CONTACT_CAPTION, DEFAULT_HERO_TAGLINE } from "@/lib/copy-defaults";
-import { resolvePublicResumeUrl, siteConfig } from "@/lib/site-config";
+import { getGithubSnapshot } from "@/lib/github";
+import { splitParagraphs, splitList, extractEmail, toSocialLinks, marqueeLabels } from "@/lib/lab/normalize";
+import type {
+  ProjectVM,
+  ExperienceVM,
+  SkillCategoryVM,
+  CertificationVM,
+  GalleryTileVM,
+  OssStats,
+} from "@/lib/lab/types";
 
 export default async function HomePage() {
-  const [about, skillCategories, portfolioRaw, certifications] = await Promise.all([
-    getPublicAbout(),
-    getPublicSkillCategories(),
-    getPublicPortfolio(),
-    getPublicCertifications(),
-  ]);
+  const [about, skillCategories, portfolioRaw, certifications, experience, social, github] =
+    await Promise.all([
+      getPublicAbout(),
+      getPublicSkillCategories(),
+      getPublicPortfolio(),
+      getPublicCertifications(),
+      getPublicExperience(),
+      getPublicSocial(),
+      getGithubSnapshot(),
+    ]);
 
-  const portfolio = Array.isArray(portfolioRaw) ? portfolioRaw : [];
+  const portfolio = (Array.isArray(portfolioRaw) ? portfolioRaw : [])
+    .slice()
+    .sort((a, b) => {
+      const sa = (a as { sortOrder?: number }).sortOrder ?? 999;
+      const sb = (b as { sortOrder?: number }).sortOrder ?? 999;
+      return sa - sb;
+    });
 
-  const aboutText =
-    about?.content ??
-    "Backend engineer focused on APIs, data, and reliability. Connect your database to replace this text in the admin panel.";
+  /* ------------------------- view models ------------------------- */
 
-  // Build gallery: cover image/video first, then extra gallery images per project
-  const galleryItems = portfolio.flatMap((p) => {
-    const tiles = [];
-    if (p?.image || p?.videoUrl) {
-      tiles.push({ id: p.id, image: p.image, videoUrl: p.videoUrl, galleryCaption: p.galleryCaption });
+  const projects: ProjectVM[] = portfolio.map((p) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    slug: p.slug || null,
+    techStack: splitList(p.techStack),
+    image: p.image || null,
+    link: p.link || null,
+    liveUrl: p.liveUrl || null,
+    videoUrl: p.videoUrl || null,
+    problem: p.problem || null,
+    solution: p.solution || null,
+    architecture: p.architecture || null,
+    featured: Boolean(p.featured),
+    gallery: (p.images ?? []).map((img) => ({
+      id: img.id,
+      url: img.url,
+      caption: img.caption ?? null,
+    })),
+  }));
+
+  const experienceVMs: ExperienceVM[] = experience.map((e) => ({
+    id: e.id,
+    year: e.year,
+    title: e.title,
+    org: e.org ?? null,
+    type: e.type,
+    description: e.description,
+    technologies: splitList(e.technologies),
+    url: e.url ?? null,
+  }));
+
+  const skills: SkillCategoryVM[] = skillCategories.map((c) => ({
+    id: c.id,
+    title: c.title,
+    items: (c.items ?? []).map((i) => i.label),
+  }));
+
+  const certificationsVMs: CertificationVM[] = certifications.map((c) => ({
+    id: c.id,
+    title: c.title,
+    issuer: c.issuer,
+    issueDate: c.issueDate ?? null,
+    credentialUrl: c.credentialUrl ?? null,
+    imageUrl: c.imageUrl ?? null,
+    pdfUrl: c.pdfUrl ?? null,
+  }));
+
+  // Gallery — real cover media first, then per-project screenshots
+  const galleryTiles: GalleryTileVM[] = portfolio.flatMap((p) => {
+    const tiles: GalleryTileVM[] = [];
+    if (p.image || p.videoUrl) {
+      tiles.push({
+        id: `cover-${p.id}`,
+        image: p.image || null,
+        videoUrl: p.videoUrl || null,
+        caption: p.galleryCaption || null,
+        projectTitle: p.title,
+        slug: p.slug || null,
+      });
     }
-    for (const img of p?.images ?? []) {
-      tiles.push({ id: `${p.id}-${img.id}`, image: img.url, videoUrl: null, galleryCaption: img.caption });
+    for (const img of p.images ?? []) {
+      tiles.push({
+        id: `img-${img.id}`,
+        image: img.url,
+        videoUrl: null,
+        caption: img.caption || null,
+        projectTitle: p.title,
+        slug: p.slug || null,
+      });
     }
     return tiles;
   });
 
-  const heroTagline = (about?.heroTagline?.trim() || DEFAULT_HERO_TAGLINE) as string;
-  const contactCaption = (about?.contactCaption?.trim() || DEFAULT_CONTACT_CAPTION) as string;
+  // Real GitHub activity (live API with verified fallback)
+  const merged = github.pulls.filter((p) => p.merged);
+  const ossStats: OssStats = {
+    mergedPRs: merged.length,
+    source: github.source,
+    profile: github.profile
+      ? {
+          login: github.profile.login,
+          htmlUrl: github.profile.htmlUrl,
+          publicRepos: github.profile.publicRepos,
+          followers: github.profile.followers,
+        }
+      : null,
+    topRepos: github.repos
+      .filter((r) => !r.fork)
+      .sort((a, b) => b.stars - a.stars)
+      .slice(0, 6)
+      .map((r) => ({
+        name: r.name,
+        description: r.description ?? null,
+        language: r.language ?? null,
+        url: r.url,
+        stars: r.stars,
+      })),
+  };
+
+  /* --------------------------- copy ------------------------------ */
+
+  const heroName = process.env.NEXT_PUBLIC_HERO_NAME ?? "Parth Bhardwaj";
+  const heroLines = heroName
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.toUpperCase())
+    .slice(0, 3);
+  // Professional support line — the giant name above already says who he is,
+  // so the greeting tagline stays out of the hero.
+  const supportLine =
+    "I build scalable backend systems, cloud infrastructure and intelligent software.";
+  const email = extractEmail(about?.contactCaption) ?? process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? null;
+  const socials = toSocialLinks(social);
+  const aboutParagraphs = splitParagraphs(about?.content);
+  const exploringLabels =
+    skills.find((c) => /ai|emerging/i.test(c.title))?.items ?? [];
 
   return (
-    <div className="flex flex-col">
-      <HomeHero
-        about={about}
-        aboutText={aboutText}
-        heroTagline={heroTagline}
-        resumeUrl={resolvePublicResumeUrl(about?.resumeUrl)}
+    <>
+      <Hero
+        heroLines={heroLines}
+        supportLine={supportLine}
+        eyebrow="Backend Engineer × AI × Cloud"
+        availability="Open to opportunities"
       />
 
-      <ScrollSection id="works" className="space-y-8 pt-20 sm:pt-24 lg:pt-28">
-        <SectionHeading
-          title="Works"
-          subtitle="Selected projects and experiments."
+      <div>
+        <AboutSection
+          paragraphs={aboutParagraphs}
+          profileImage={about?.profileImage || null}
+          exploringLabels={exploringLabels}
         />
-        {portfolio.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border px-6 py-16 text-center text-sm text-muted">
-            Projects coming soon — add items from the admin panel.
-          </div>
-        ) : (
-          <WorksScrollShowcase items={portfolio} />
-        )}
-      </ScrollSection>
 
-      <ScrollSection id="gallery" className="space-y-10 pt-20 sm:pt-24 lg:pt-28">
-        <SectionHeading
-          title="Gallery"
-          subtitle="Visual snapshots from the portfolio."
+        <EngineeringPhilosophy />
+
+        <ProjectsSection projects={projects} />
+
+        <OpenSourceStrip stats={ossStats} />
+
+        <SkillsMarquee labels={marqueeLabels(skills)} />
+
+        <TechStack categories={skills} />
+
+        <ExperienceSection entries={experienceVMs} />
+
+        <CertificationsSection certifications={certificationsVMs} />
+
+        <GallerySection tiles={galleryTiles} />
+
+        <ResumeSection
+          name={heroName}
+          role={process.env.NEXT_PUBLIC_HERO_TITLE ?? "Backend Engineer"}
+          location="India"
+          email={email}
+          experience={experienceVMs}
+          certifications={certificationsVMs}
+          skillCategories={skills}
         />
-        <GalleryMasonry items={galleryItems} />
-      </ScrollSection>
 
-      <ScrollSection id="skills" className="pt-20 sm:pt-24 lg:pt-28">
-        <TechnicalSkillsSection
-          categories={skillCategories}
-          heading={siteConfig.skillsSectionHeading}
-        />
-      </ScrollSection>
-
-      {certifications.length > 0 && (
-        <ScrollSection id="certifications" className="space-y-8 pt-20 sm:pt-24 lg:pt-28">
-          <SectionHeading
-            title="Certifications"
-            subtitle="Credentials and achievements."
-          />
-          <CertificationsSection certifications={certifications} />
-        </ScrollSection>
-      )}
-
-      <ScrollSection id="contact" className="space-y-10 pb-4 pt-20 sm:pt-24 lg:pt-28">
-        <ContactSection
-          profileImage={about?.profileImage ?? null}
-          displayName={String(siteConfig.heroName ?? "Portfolio")}
-          contactCaption={contactCaption}
-        />
-      </ScrollSection>
-
-      <SiteFooter />
-    </div>
+        <ContactSection email={email} socials={socials} />
+      </div>
+    </>
   );
 }
-

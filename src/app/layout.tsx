@@ -1,18 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Syne } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { getPublicAbout, getPublicSocial } from "@/lib/public-data";
 
-const dmSans = DM_Sans({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-geist-sans",
+  variable: "--font-display",
   display: "swap",
 });
 
-const syne = Syne({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-display",
+  weight: ["400", "500"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -24,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const about = await getPublicAbout().catch(() => null);
 
   const title = `${heroName} — ${heroTitle}`;
-  const description = `Personal portfolio of ${heroName}, a ${heroTitle} specialising in APIs, scalable systems, and full-stack web engineering.`;
+  const description = `Personal portfolio of ${heroName}, a ${heroTitle} building scalable backend systems, cloud infrastructure and intelligent applications.`;
 
   const favicon = about?.favicon?.trim() || null;
   const ogImage = about?.ogImage?.trim() || null;
@@ -37,11 +39,23 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${heroName}`,
     },
     description,
-    keywords: [heroName, heroTitle, "portfolio", "backend developer", "full stack", "web development", "API", "Next.js"],
+    keywords: [
+      heroName,
+      heroTitle,
+      "portfolio",
+      "backend engineer",
+      "AI engineer",
+      "cloud",
+      "Go",
+      "Python",
+      "AWS",
+      "Kubernetes",
+      "distributed systems",
+      "Next.js",
+    ],
     authors: [{ name: heroName }],
     creator: heroName,
 
-    // Favicon / browser tab icon
     ...(favicon
       ? {
           icons: {
@@ -120,7 +134,7 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="dark">
       <head>
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
@@ -134,7 +148,9 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
       </head>
-      <body className={`${dmSans.variable} ${syne.variable} font-sans antialiased`}>
+      <body
+        className={`${GeistSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} noise-overlay font-sans antialiased`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>
