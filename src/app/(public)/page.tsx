@@ -10,6 +10,7 @@ import { CertificationsSection } from "@/components/lab/certifications-section";
 import { GallerySection } from "@/components/lab/gallery-section";
 import { ResumeSection } from "@/components/lab/resume-section";
 import { ContactSection } from "@/components/lab/contact-section";
+import { TournamentSection } from "@/components/lab/tournament-section";
 import {
   getPublicAbout,
   getPublicCertifications,
@@ -212,6 +213,8 @@ export default async function HomePage() {
         />
 
         <ContactSection email={email} socials={socials} />
+
+        <TournamentSection />
       </div>
     </>
   );
