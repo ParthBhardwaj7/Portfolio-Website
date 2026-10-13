@@ -101,6 +101,22 @@ export default async function HomePage() {
         />
       </ScrollSection>
 
+      <ScrollSection id="india" className="space-y-8 pt-20 sm:pt-24 lg:pt-28">
+        <SectionHeading
+          title="India"
+          subtitle="PGTI India 2026 — live tournament scores from Riverbend Golf Links, Pune."
+        />
+        <div className="mx-auto w-full max-w-5xl px-4">
+          <iframe
+            src="/api/public/golfai/t/pgti/india-2026"
+            title="India"
+            width="100%"
+            height="1600"
+            style={{ border: 0 }}
+          />
+        </div>
+      </ScrollSection>
+
       <SiteFooter />
     </div>
   );
